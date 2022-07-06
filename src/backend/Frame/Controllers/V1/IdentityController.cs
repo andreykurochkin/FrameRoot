@@ -70,7 +70,7 @@ public class IdentityController : ControllerBase
         }
         return Ok(new AuthSuccessResponse
         {
-            Token = authResponse.Token,
+            Token = authResponse.AccessToken,
             RefreshToken = authResponse.RefreshToken,
         });
     }
@@ -88,7 +88,7 @@ public class IdentityController : ControllerBase
         }
         return Ok(new AuthSuccessResponse
         {
-            Token = authResponse.Token,
+            Token = authResponse.AccessToken,
             RefreshToken = authResponse.RefreshToken
         });
     }

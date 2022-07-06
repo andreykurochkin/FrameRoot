@@ -1,20 +1,17 @@
-﻿using Frame.Domain;
-using Frame.Infrastructure.Options;
+﻿using Frame.Infrastructure.Options;
 using Frame.Infrastructure.Providers.Base;
-using Microsoft.AspNetCore.DataProtection.KeyManagement;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
 namespace Frame.Infrastructure.Providers;
-public class DefaultJwtProvider : IJwtProvider
+public class DefaultSecurityTokenProvider : ISecurityTokenProvider
 {
     private readonly JwtOptions _jwtOptions;
     private readonly IDateTimeProvider _dateTimeProvider;
 
-    public DefaultJwtProvider(
+    public DefaultSecurityTokenProvider(
         JwtOptions jwtOptions,
         IDateTimeProvider dateTimeProvider)
     {
@@ -22,14 +19,14 @@ public class DefaultJwtProvider : IJwtProvider
         _dateTimeProvider = dateTimeProvider;
     }
 
-    private SigningCredentials CreateSigningCredentials(byte[] key)
+    private static SigningCredentials CreateSigningCredentials(byte[] key)
     {
         var symmetricSecurityKey = new SymmetricSecurityKey(key);
         var signingCredentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256Signature);
         return signingCredentials;
     }
 
-    private string GetAccessToken(IEnumerable<Claim> claims, DateTime expires, byte[] key)
+    private static SecurityToken GetSecurityToken(IEnumerable<Claim> claims, DateTime expires, byte[] key)
     {
         var tokenDescriptor = new SecurityTokenDescriptor
         {
@@ -38,8 +35,7 @@ public class DefaultJwtProvider : IJwtProvider
             SigningCredentials = CreateSigningCredentials(key),
         };
         var tokenHandler = new JwtSecurityTokenHandler();
-        var accessToken = tokenHandler.CreateToken(tokenDescriptor);
-        var result = tokenHandler.WriteToken(accessToken);
+        var result = tokenHandler.CreateToken(tokenDescriptor);
         return result;
     }
 
@@ -59,12 +55,12 @@ public class DefaultJwtProvider : IJwtProvider
 
     private DateTime GetExpires(TimeSpan tokenLifeTime) => _dateTimeProvider.GetDateTime().ToUniversalTime().Add(tokenLifeTime);
 
-    public string GetAccessToken(Frame.Domain.IdentityUser identityUser)
+    public SecurityToken GetSecurityToken(Frame.Domain.IdentityUser identityUser)
     {
         var claims = GetClaims(identityUser);
         var expires = GetExpires(_jwtOptions.TokenLifeTime);
         var key = Encoding.ASCII.GetBytes(_jwtOptions.Secret);
-        var result = GetAccessToken(claims, expires, key);
+        var result = GetSecurityToken(claims, expires, key);
         return result;
     }
 }

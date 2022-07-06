@@ -6,7 +6,6 @@ using Frame.Infrastructure.Services.Base;
 using Frame.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Frame.Infrastructure.Validators.Base;
@@ -43,15 +42,13 @@ public class MvcInstaller : IInstaller
             jwtBearerOptions.TokenValidationParameters = tokenValidationParameters;
         });
 
-        // todo change to singleton
         services.AddSingleton<IDateTimeProvider,DateTimeNowProvider>();
-
-        services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
-
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddSingleton<ISaltProvider, DefaultSaltProvider>();
         services.AddSingleton<IHashProvider, DefaultHashProvider>();
         services.AddSingleton<IPasswordValidator, DefaultPasswordValidator>();
+        services.AddSingleton<ISecurityTokenProvider, DefaultSecurityTokenProvider>();
+        services.AddSingleton<IRefreshTokenProvider, DefaultRefreshTokenProvider>();
 
         services.AddControllers();
     }

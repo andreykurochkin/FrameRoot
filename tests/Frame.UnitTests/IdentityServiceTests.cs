@@ -24,9 +24,20 @@ public class IdentityServiceTests
     private IHashProvider _hashProvider = new DefaultHashProvider();
     private IPasswordValidator _passwordValidator = null!;
     private IDateTimeProvider _dateTimeProvider = new DateTimeNowProvider();
+    private ISecurityTokenProvider _securityTokenProvider;
+    private readonly JwtOptions _jwtOptions;
+    private readonly IRefreshTokenProvider _refreshTokenProvider;
+
     public IdentityServiceTests()
     {
+        _jwtOptions = new JwtOptions
+        {
+            Secret = "01234567890123456789012345678912",
+            TokenLifeTime = new TimeSpan(0, 0, 15),
+        };
         _passwordValidator = new DefaultPasswordValidator(_hashProvider);
+        _securityTokenProvider = new DefaultSecurityTokenProvider(_jwtOptions, _dateTimeProvider);
+        _refreshTokenProvider = new DefaultRefreshTokenProvider(_dateTimeProvider);
     }
 
     [Fact]
@@ -41,7 +52,9 @@ public class IdentityServiceTests
                    jwtOptions: null!,
                    dateTimeProvider: null!,
                    tokenValidationParameters: null!,
-                   identityUserRepository: _mockIdentityUserRepository.Object);
+                   identityUserRepository: _mockIdentityUserRepository.Object,
+                   securityTokenProvider: null!,
+                   refreshTokenProvider: null!);
 
         var result = await _sut.LoginAsync(Email, Password);
 
@@ -66,7 +79,9 @@ public class IdentityServiceTests
                    jwtOptions: null!,
                    dateTimeProvider: null!,
                    tokenValidationParameters: null!,
-                   identityUserRepository: _mockIdentityUserRepository.Object);
+                   identityUserRepository: _mockIdentityUserRepository.Object,
+                   securityTokenProvider: null!,
+                   refreshTokenProvider: null!);
         var randomPassword = Guid.NewGuid().ToString();
 
         var result = await _sut.LoginAsync(Email, randomPassword);
@@ -92,22 +107,19 @@ public class IdentityServiceTests
         _mockIdentityUserRepository
             .Setup(repository => repository.FindByEmailAsync(It.IsNotNull<string>()))
             .ReturnsAsync(identityUser);
-        var jwtOptions = new JwtOptions
-        {
-            Secret = "01234567890123456789012345678912",
-            TokenLifeTime = TimeSpan.FromSeconds(45),
-        };
         _sut = new IdentityService(passwordValidator: _passwordValidator,
-                   jwtOptions: jwtOptions,
+                   jwtOptions: _jwtOptions,
                    dateTimeProvider: _dateTimeProvider,
                    tokenValidationParameters: null!,
-                   identityUserRepository: _mockIdentityUserRepository.Object);
+                   identityUserRepository: _mockIdentityUserRepository.Object,
+                   securityTokenProvider: _securityTokenProvider,
+                   refreshTokenProvider: _refreshTokenProvider);
         
         var result = await _sut.LoginAsync(Email, Password);
 
         result.Should().BeOfType<AuthenticationResult>();
         result.Succeded.Should().BeTrue();
-        result.Token.Should().NotBeNullOrEmpty();
+        result.AccessToken.Should().NotBeNullOrEmpty();
         result.RefreshToken.Should().NotBeNullOrEmpty();
     }
 }

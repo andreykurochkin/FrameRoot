@@ -18,18 +18,24 @@ public class IdentityService : IIdentityService
     private readonly TokenValidationParameters _tokenValidationParameters;
     //private readonly IRefreshTokenRepository _refreshTokenRepository;
     private readonly IIdentityUserRepository _identityUserRepository;
+    private readonly ISecurityTokenProvider _securityTokenProvider;
+    private readonly IRefreshTokenProvider _refreshTokenProvider;
     public IdentityService(Validators.Base.IPasswordValidator passwordValidator,
                            JwtOptions jwtOptions,
                            IDateTimeProvider dateTimeProvider,
                            TokenValidationParameters tokenValidationParameters/*,
-                           IRefreshTokenRepository refreshTokenRepository*/
-                                                                           , IIdentityUserRepository identityUserRepository)
+                           IRefreshTokenRepository refreshTokenRepository*/,
+                           IIdentityUserRepository identityUserRepository,
+                           ISecurityTokenProvider securityTokenProvider, 
+                           IRefreshTokenProvider refreshTokenProvider)
     {
         _passwordValidator = passwordValidator;
         _jwtOptions = jwtOptions;
         _dateTimeProvider = dateTimeProvider;
         _tokenValidationParameters = tokenValidationParameters;
         _identityUserRepository = identityUserRepository;
+        _securityTokenProvider = securityTokenProvider;
+        _refreshTokenProvider = refreshTokenProvider;
         //_refreshTokenRepository = refreshTokenRepository;
     }
 
@@ -56,39 +62,14 @@ public class IdentityService : IIdentityService
 
     private async Task<AuthenticationResult> GenerateAuthenticationResultForUserAsync(Frame.Domain.IdentityUser identityUser)
     {
-        var claims = new List<Claim>()
-        {
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new Claim(JwtRegisteredClaimNames.Sub, identityUser.Email),
-            new Claim(JwtRegisteredClaimNames.Email, identityUser.Email),
-            new Claim("identityUserId", identityUser.Id.ToString()),
-        };
-        var userClaims = identityUser.Claims?.ToList() ?? Enumerable.Empty<Claim>();
-        claims.AddRange(userClaims);
+        var accessToken = _securityTokenProvider.GetSecurityToken(identityUser);
+        var refreshToken = _refreshTokenProvider.GetRefreshToken(accessToken, identityUser);
 
-        var key = Encoding.ASCII.GetBytes(_jwtOptions.Secret);
-        var symmetricSecurityKey = new SymmetricSecurityKey(key);
-        var tokenDescriptor = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity(claims),
-            Expires = _dateTimeProvider.GetDateTime().Add(_jwtOptions.TokenLifeTime),
-            SigningCredentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256Signature),
-        };
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var accessToken = tokenHandler.CreateToken(tokenDescriptor);
-        var refreshToken = new RefreshToken
-        {
-            Token = Guid.NewGuid().ToString(),
-            JwtId = accessToken.Id,
-            UserId = identityUser.Id.ToString(),
-            CreationDate = _dateTimeProvider.GetDateTime(),
-            ExpiryDate = _dateTimeProvider.GetDateTime().AddMonths(6),
-        };
-
+        var jwtToken = new JwtSecurityTokenHandler().WriteToken(accessToken);
         var result = new AuthenticationResult
         {
             Succeded = true,
-            Token = tokenHandler.WriteToken(accessToken),
+            AccessToken = jwtToken,
             RefreshToken = refreshToken.Token,
         };
         return result;

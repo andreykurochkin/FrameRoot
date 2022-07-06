@@ -3,25 +3,26 @@ using Frame.Infrastructure.Options;
 using Frame.Infrastructure.Providers;
 using Frame.Infrastructure.Providers.Base;
 using System;
+using System.IdentityModel.Tokens.Jwt;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace Frame.UnitTests;
-public class DefaultJwtProviderTests
+public class DefaultSecurityTokenProviderTests
 {
-    IJwtProvider _sut = null!;
+    ISecurityTokenProvider _sut = null!;
     private readonly JwtOptions _jwtOptions = null!;
     private readonly IDateTimeProvider _dateTimeProvider = new DateTimeNowProvider();
     private readonly ITestOutputHelper _testOutputHelper;
 
-    public DefaultJwtProviderTests(ITestOutputHelper testOutputHelper)
+    public DefaultSecurityTokenProviderTests(ITestOutputHelper testOutputHelper)
     {
         _jwtOptions = new JwtOptions
         {
             Secret = "01234567890123456789012345678912",
             TokenLifeTime = new TimeSpan(0, 0, 15),
         };
-        _sut = new DefaultJwtProvider(_jwtOptions, _dateTimeProvider);
+        _sut = new DefaultSecurityTokenProvider(_jwtOptions, _dateTimeProvider);
         _testOutputHelper = testOutputHelper;
     }
 
@@ -34,10 +35,9 @@ public class DefaultJwtProviderTests
             Email = "test@test.com",
         };
 
-        var result = _sut.GetAccessToken(identityUser);
+        var result = _sut.GetSecurityToken(identityUser);
 
-        result.Should().NotBeNullOrEmpty();
-        _testOutputHelper.WriteLine(result);
+        result.Should().NotBeNull();
     }
 
     [Fact]
@@ -49,7 +49,7 @@ public class DefaultJwtProviderTests
             Email = null,
         };
 
-        var func = () => _sut.GetAccessToken(identityUser);
+        var func = () => _sut.GetSecurityToken(identityUser);
 
         func.Should().Throw<ArgumentNullException>();
     }
