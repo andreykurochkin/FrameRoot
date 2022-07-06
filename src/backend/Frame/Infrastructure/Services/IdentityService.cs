@@ -13,14 +13,14 @@ using System.Text;
 namespace Frame.Infrastructure.Services;
 public class IdentityService : IIdentityService
 {
-    private readonly IUserService _userService;
+    private readonly Validators.Base.IPasswordValidator _passwordValidator;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly JwtOptions _jwtOptions;
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly TokenValidationParameters _tokenValidationParameters;
     //private readonly IRefreshTokenRepository _refreshTokenRepository;
     private readonly IIdentityUserRepository _identityUserRepository;
-    public IdentityService(IUserService userService,
+    public IdentityService(Validators.Base.IPasswordValidator passwordValidator,
                            JwtOptions jwtOptions,
                            IDateTimeProvider dateTimeProvider,
                            IHttpContextAccessor httpContextAccessor,
@@ -28,7 +28,7 @@ public class IdentityService : IIdentityService
                            IRefreshTokenRepository refreshTokenRepository*/
                                                                            , IIdentityUserRepository identityUserRepository)
     {
-        _userService = userService;
+        _passwordValidator = passwordValidator;
         _jwtOptions = jwtOptions;
         _dateTimeProvider = dateTimeProvider;
         _httpContextAccessor = httpContextAccessor;
@@ -47,12 +47,12 @@ public class IdentityService : IIdentityService
                 Errors = new[] { "User doesn`t exist" }
             };
         }
-        var passwordIsValid = await _userService.CheckPasswordAsync(user, password);
-        if (!passwordIsValid)
+        var identityResult = await _passwordValidator.ValidateAsync(user, password);
+        if (!identityResult.Succeeded)
         {
             return new AuthenticationResult
             {
-                Errors = new[] { "Bad login/password pair" }
+                Errors = identityResult.Errors.Select(identityError => identityError.Description)
             };
         }
         return await GenerateAuthenticationResultForUserAsync(user);
