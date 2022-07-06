@@ -40,7 +40,6 @@ public class IdentityServiceTests
         _sut = new IdentityService(passwordValidator: _passwordValidator,
                    jwtOptions: null!,
                    dateTimeProvider: null!,
-                   httpContextAccessor: null!,
                    tokenValidationParameters: null!,
                    identityUserRepository: _mockIdentityUserRepository.Object);
 
@@ -66,7 +65,6 @@ public class IdentityServiceTests
         _sut = new IdentityService(passwordValidator: _passwordValidator,
                    jwtOptions: null!,
                    dateTimeProvider: null!,
-                   httpContextAccessor: null!,
                    tokenValidationParameters: null!,
                    identityUserRepository: _mockIdentityUserRepository.Object);
         var randomPassword = Guid.NewGuid().ToString();
@@ -102,7 +100,6 @@ public class IdentityServiceTests
         _sut = new IdentityService(passwordValidator: _passwordValidator,
                    jwtOptions: jwtOptions,
                    dateTimeProvider: _dateTimeProvider,
-                   httpContextAccessor: null!,
                    tokenValidationParameters: null!,
                    identityUserRepository: _mockIdentityUserRepository.Object);
         

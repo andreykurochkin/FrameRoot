@@ -13,7 +13,6 @@ namespace Frame.Infrastructure.Services;
 public class IdentityService : IIdentityService
 {
     private readonly Validators.Base.IPasswordValidator _passwordValidator;
-    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly JwtOptions _jwtOptions;
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly TokenValidationParameters _tokenValidationParameters;
@@ -22,7 +21,6 @@ public class IdentityService : IIdentityService
     public IdentityService(Validators.Base.IPasswordValidator passwordValidator,
                            JwtOptions jwtOptions,
                            IDateTimeProvider dateTimeProvider,
-                           IHttpContextAccessor httpContextAccessor,
                            TokenValidationParameters tokenValidationParameters/*,
                            IRefreshTokenRepository refreshTokenRepository*/
                                                                            , IIdentityUserRepository identityUserRepository)
@@ -30,7 +28,6 @@ public class IdentityService : IIdentityService
         _passwordValidator = passwordValidator;
         _jwtOptions = jwtOptions;
         _dateTimeProvider = dateTimeProvider;
-        _httpContextAccessor = httpContextAccessor;
         _tokenValidationParameters = tokenValidationParameters;
         _identityUserRepository = identityUserRepository;
         //_refreshTokenRepository = refreshTokenRepository;
@@ -66,7 +63,7 @@ public class IdentityService : IIdentityService
             new Claim(JwtRegisteredClaimNames.Email, identityUser.Email),
             new Claim("identityUserId", identityUser.Id.ToString()),
         };
-        var userClaims = _httpContextAccessor?.HttpContext?.User.Claims ?? Enumerable.Empty<Claim>();
+        var userClaims = identityUser.Claims?.ToList() ?? Enumerable.Empty<Claim>();
         claims.AddRange(userClaims);
 
         var key = Encoding.ASCII.GetBytes(_jwtOptions.Secret);

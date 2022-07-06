@@ -17,8 +17,6 @@ public class MvcInstaller : IInstaller
 {
     public void InstallService(IServiceCollection services, IConfiguration configuration)
     {
-        services.AddHttpContextAccessor();
-
         var jwtOptions = configuration.GetSection("JwtOptions").Get<JwtOptions>();
         var tokenValidationParameters = new TokenValidationParameters
         {
