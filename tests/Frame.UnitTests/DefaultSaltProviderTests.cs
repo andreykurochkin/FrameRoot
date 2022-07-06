@@ -5,7 +5,7 @@ using Xunit;
 namespace Frame.UnitTests;
 public class DefaultSaltProviderTests
 {
-    DefaultSaltProvider _sut = new DefaultSaltProvider();
+    private readonly DefaultSaltProvider _sut = new DefaultSaltProvider();
     
     [Fact]
     public void GetSalt_ShouldGenerateNotNullSalt()
