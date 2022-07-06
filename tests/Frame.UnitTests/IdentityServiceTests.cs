@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 using Frame.Domain;
+using Frame.Infrastructure.Options;
 using Frame.Infrastructure.Providers;
 using Frame.Infrastructure.Providers.Base;
 using Frame.Infrastructure.Repositories.Base;
@@ -22,6 +23,7 @@ public class IdentityServiceTests
     private ISaltProvider _saltProvider = new DefaultSaltProvider();
     private IHashProvider _hashProvider = new DefaultHashProvider();
     private IPasswordValidator _passwordValidator = null!;
+    private IDateTimeProvider _dateTimeProvider = new DateTimeNowProvider();
     public IdentityServiceTests()
     {
         _passwordValidator = new DefaultPasswordValidator(_hashProvider);
@@ -53,11 +55,10 @@ public class IdentityServiceTests
     public async Task LoginAsync_ShouldReturnFailedAuthenticationResultWithExpectedMessage_WhenProvidedPasswordAndStoredPasswordDontMatch()
     {
         var expectedErrorMessage = "Bad login/password pair";
-        var salt = _saltProvider.GetSalt();
         var identityUser = new IdentityUser
         {
             Password = Password,
-            Salt = salt,
+            Salt = _saltProvider.GetSalt(),
         };
         _mockIdentityUserRepository
             .Setup(repository => repository.FindByEmailAsync(It.IsNotNull<string>()))
@@ -75,5 +76,41 @@ public class IdentityServiceTests
         result.Should().BeOfType<AuthenticationResult>();
         result.Succeded.Should().BeFalse();
         result.Errors.Should().Contain(expectedErrorMessage);
+    }
+
+    [Fact]
+    public async Task LoginAsync_ShouldReturnSuccededAuthenticationResult_WhenDataIsValid()
+    {
+        var salt = _saltProvider.GetSalt();
+        var saltAsBytes = Encoding.ASCII.GetBytes(salt);
+        var hashedPassword = await _hashProvider.GetHashAsync(Password, saltAsBytes);
+        var identityUser = new IdentityUser
+        {
+            Id = Guid.NewGuid().ToString(),
+            Email = Email,
+            Password = hashedPassword,
+            Salt = salt,
+        };
+        _mockIdentityUserRepository
+            .Setup(repository => repository.FindByEmailAsync(It.IsNotNull<string>()))
+            .ReturnsAsync(identityUser);
+        var jwtOptions = new JwtOptions
+        {
+            Secret = "01234567890123456789012345678912",
+            TokenLifeTime = TimeSpan.FromSeconds(45),
+        };
+        _sut = new IdentityService(passwordValidator: _passwordValidator,
+                   jwtOptions: jwtOptions,
+                   dateTimeProvider: _dateTimeProvider,
+                   httpContextAccessor: null!,
+                   tokenValidationParameters: null!,
+                   identityUserRepository: _mockIdentityUserRepository.Object);
+        
+        var result = await _sut.LoginAsync(Email, Password);
+
+        result.Should().BeOfType<AuthenticationResult>();
+        result.Succeded.Should().BeTrue();
+        result.Token.Should().NotBeNullOrEmpty();
+        result.RefreshToken.Should().NotBeNullOrEmpty();
     }
 }

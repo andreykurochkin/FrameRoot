@@ -4,7 +4,6 @@ using Frame.Infrastructure.Options;
 using Frame.Infrastructure.Providers.Base;
 using Frame.Infrastructure.Repositories.Base;
 using Frame.Infrastructure.Services.Base;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -58,7 +57,7 @@ public class IdentityService : IIdentityService
         return await GenerateAuthenticationResultForUserAsync(user);
     }
 
-    private Task<AuthenticationResult> GenerateAuthenticationResultForUserAsync(Frame.Domain.IdentityUser identityUser)
+    private async Task<AuthenticationResult> GenerateAuthenticationResultForUserAsync(Frame.Domain.IdentityUser identityUser)
     {
         var claims = new List<Claim>()
         {
@@ -67,7 +66,7 @@ public class IdentityService : IIdentityService
             new Claim(JwtRegisteredClaimNames.Email, identityUser.Email),
             new Claim("identityUserId", identityUser.Id.ToString()),
         };
-        var userClaims = _httpContextAccessor.HttpContext?.User.Claims ?? Enumerable.Empty<Claim>();
+        var userClaims = _httpContextAccessor?.HttpContext?.User.Claims ?? Enumerable.Empty<Claim>();
         claims.AddRange(userClaims);
 
         var key = Encoding.ASCII.GetBytes(_jwtOptions.Secret);
@@ -95,7 +94,7 @@ public class IdentityService : IIdentityService
             Token = tokenHandler.WriteToken(accessToken),
             RefreshToken = refreshToken.Token,
         };
-        return Task.FromResult(result);
+        return result;
     }
 
     public async Task<AuthenticationResult> RefreshTokenAsync(string? token, string? password)
