@@ -35,7 +35,6 @@ public class IdentityControllerTests
         var result = await _sut.Login(_userLoginRequest);
 
         result.Should().BeOfType<BadRequestObjectResult>();
-        var tt = "";
     }
 
     [Fact]
