@@ -41,7 +41,7 @@ public class IdentityController : ControllerBase
             Email = "Test@test.com",
             FamilyName = "Mercury",
             GivenName = "Freddie",
-            PasswordSalt = "salt",
+            Salt = "salt",
             Password = "pass",
         };
         await _identityUserRepository.CreateAsync(user);
