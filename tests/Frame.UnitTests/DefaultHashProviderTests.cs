@@ -1,6 +1,7 @@
 ﻿using FluentAssertions;
 using Frame.Infrastructure.Providers;
 using System.Text;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Frame.UnitTests;
@@ -10,13 +11,13 @@ public class DefaultHashProviderTests
     private readonly DefaultSaltProvider _saltProvider = new DefaultSaltProvider();
 
     [Fact]
-    public void GetHash_ShouldGenerateNotNullHash_WhenDataIsValid()
+    public async Task GetHash_ShouldGenerateNotNullHash_WhenDataIsValid()
     {
         const string password = "password";
         var salt = _saltProvider.GetSalt();
         var saltAsBytes = Encoding.ASCII.GetBytes(salt);
 
-        var result = _sut.GetHash(password, saltAsBytes);
+        var result = await _sut.GetHashAsync(password, saltAsBytes);
 
         result.Should().NotBeNullOrEmpty();
     }
@@ -32,8 +33,11 @@ public class DefaultHashProviderTests
         var salt2 = _saltProvider.GetSalt();
         var saltAsBytes2 = Encoding.ASCII.GetBytes(salt2);
 
-        var result1 = _sut.GetHash(password1, saltAsBytes1);
-        var result2 = _sut.GetHash(password2, saltAsBytes2);
+        var task1 = _sut.GetHashAsync(password1, saltAsBytes1);
+        var task2 = _sut.GetHashAsync(password2, saltAsBytes2);
+        Task.WhenAll(task1, task2);
+        var result1 = task1.Result;
+        var result2 = task2.Result;
 
         result1.Should().NotBe(result2);
     }
@@ -49,8 +53,11 @@ public class DefaultHashProviderTests
         var salt2 = _saltProvider.GetSalt();
         var saltAsBytes2 = Encoding.ASCII.GetBytes(salt2);
 
-        var result1 = _sut.GetHash(password1, saltAsBytes1);
-        var result2 = _sut.GetHash(password2, saltAsBytes2);
+        var task1 = _sut.GetHashAsync(password1, saltAsBytes1);
+        var task2 = _sut.GetHashAsync(password2, saltAsBytes2);
+        Task.WhenAll(task1, task2);
+        var result1 = task1.Result;
+        var result2 = task2.Result;
 
         result1.Should().NotBe(result2);
     }
@@ -66,8 +73,11 @@ public class DefaultHashProviderTests
         var salt2 = salt1;
         var saltAsBytes2 = Encoding.ASCII.GetBytes(salt2);
 
-        var result1 = _sut.GetHash(password1, saltAsBytes1);
-        var result2 = _sut.GetHash(password2, saltAsBytes2);
+        var task1 = _sut.GetHashAsync(password1, saltAsBytes1);
+        var task2 = _sut.GetHashAsync(password2, saltAsBytes2);
+        Task.WhenAll(task1, task2);
+        var result1 = task1.Result;
+        var result2 = task2.Result;
 
         result1.Should().NotBe(result2);
     }
@@ -83,8 +93,11 @@ public class DefaultHashProviderTests
         var salt2 = salt1;
         var saltAsBytes2 = Encoding.ASCII.GetBytes(salt2);
 
-        var result1 = _sut.GetHash(password1, saltAsBytes1);
-        var result2 = _sut.GetHash(password2, saltAsBytes2);
+        var task1 = _sut.GetHashAsync(password1, saltAsBytes1);
+        var task2 = _sut.GetHashAsync(password2, saltAsBytes2);
+        Task.WhenAll(task1, task2);
+        var result1 = task1.Result;
+        var result2 = task2.Result;
 
         result1.Should().Be(result2);
     }
