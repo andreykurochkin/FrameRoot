@@ -6,6 +6,7 @@ using System.Security.Claims;
 using System.Text;
 
 namespace Frame.Infrastructure.Providers;
+
 public class DefaultSecurityTokenProvider : ISecurityTokenProvider
 {
     private readonly JwtOptions _jwtOptions;
@@ -26,20 +27,28 @@ public class DefaultSecurityTokenProvider : ISecurityTokenProvider
         return signingCredentials;
     }
 
-    private static SecurityToken GetSecurityToken(IEnumerable<Claim> claims, DateTime expires, byte[] key)
+    public static SecurityToken GetSecurityToken(IEnumerable<Claim> claims, DateTime expires, byte[] key)
     {
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
-            Expires = expires,
+            Expires = expires.ToUniversalTime(),
             SigningCredentials = CreateSigningCredentials(key),
+            //NotBefore = expires.ToUniversalTime().AddDays(1/*TimeSpan.FromDays(1)*/).ToUniversalTime(),
         };
         var tokenHandler = new JwtSecurityTokenHandler();
-        var result = tokenHandler.CreateToken(tokenDescriptor);
-        return result;
+        try
+        {
+            var result = tokenHandler.CreateToken(tokenDescriptor);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            throw ex;
+        }
     }
 
-    private IEnumerable<Claim> GetClaims(Frame.Domain.IdentityUser identityUser)
+    public IEnumerable<Claim> GetClaims(Frame.Domain.IdentityUser identityUser)
     {
         var claims = new List<Claim>()
         {

@@ -13,6 +13,17 @@ public static class JwtSecurityTokenHelper
             jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase);
     }
 
+    //public static ClaimsPrincipal? GetClaimsPrincipalFromTokenSafe(string? token, TokenValidationParameters tokenValidationParameters)
+    //{
+    //    ClaimsPrincipal? result = null!;
+    //    try
+    //    {
+    //        result = GetClaimsPrincipalFromToken(token, tokenValidationParameters);
+    //    }
+    //    catch (Exception) { }
+    //    return result;
+    //}
+
     public static ClaimsPrincipal? GetClaimsPrincipalFromToken(string? token, TokenValidationParameters tokenValidationParameters)
     {
         var tokenHandler = new JwtSecurityTokenHandler();

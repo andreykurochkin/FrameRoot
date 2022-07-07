@@ -7,8 +7,11 @@ using Frame.Infrastructure.Repositories.Base;
 using Frame.Infrastructure.Services;
 using Frame.Infrastructure.Validators;
 using Frame.Infrastructure.Validators.Base;
+using Frame.UnitTests.Helpers;
+using Microsoft.IdentityModel.Tokens;
 using Moq;
 using System;
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
@@ -27,6 +30,7 @@ public class IdentityServiceTests
     private ISecurityTokenProvider _securityTokenProvider;
     private readonly JwtOptions _jwtOptions;
     private readonly IRefreshTokenProvider _refreshTokenProvider;
+    private readonly TokenValidationParameters _tokenValidationParameters;
 
     public IdentityServiceTests()
     {
@@ -38,6 +42,15 @@ public class IdentityServiceTests
         _passwordValidator = new DefaultPasswordValidator(_hashProvider);
         _securityTokenProvider = new DefaultSecurityTokenProvider(_jwtOptions, _dateTimeProvider);
         _refreshTokenProvider = new DefaultRefreshTokenProvider(_dateTimeProvider);
+        _tokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_jwtOptions.Secret)),
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            RequireExpirationTime = false,
+            ValidateLifetime = true,
+        };
     }
 
     [Fact]
@@ -104,6 +117,7 @@ public class IdentityServiceTests
             Password = hashedPassword,
             Salt = salt,
         };
+
         _mockIdentityUserRepository
             .Setup(repository => repository.FindByEmailAsync(It.IsNotNull<string>()))
             .ReturnsAsync(identityUser);
@@ -121,5 +135,66 @@ public class IdentityServiceTests
         result.Succeded.Should().BeTrue();
         result.AccessToken.Should().NotBeNullOrEmpty();
         result.RefreshToken.Should().NotBeNullOrEmpty();
+    }
+
+    [Fact]
+    public async Task RefreshTokenAsync_ShouldReturnFailedAuthenticationResult_WhenClaimsPrincipalTakenFromTokenIsNull()
+    {
+        _sut = new IdentityService(passwordValidator: _passwordValidator,
+                   jwtOptions: _jwtOptions,
+                   dateTimeProvider: _dateTimeProvider,
+                   tokenValidationParameters: _tokenValidationParameters,
+                   identityUserRepository: _mockIdentityUserRepository.Object,
+                   securityTokenProvider: _securityTokenProvider,
+                   refreshTokenProvider: _refreshTokenProvider);
+        const string expectedErrorMessage = "Invalid token";
+
+        const string invalidToken = null!;
+        var result = await _sut.RefreshTokenAsync(invalidToken, Password);
+
+        result.Should().BeOfType<AuthenticationResult>();
+        result.Errors.Should().Contain(expectedErrorMessage);
+    }
+
+    [Fact]
+    public async Task RefreshTokenAsync_ShouldReturnFailedAuthenticationResult_WhenAccessTokenExpired()
+    {
+        
+        var cashedDateTime = DateTime.UtcNow;
+        var mockCurrentDateTimeProvider = new Mock<IDateTimeProvider>();
+        mockCurrentDateTimeProvider.Setup(dateTimeProvider => dateTimeProvider.GetDateTime())
+            .Returns(cashedDateTime);
+        
+        var timeGap = _jwtOptions.TokenLifeTime.TotalSeconds - 10;
+        var cashedDateTimeMinus10Minutes = cashedDateTime.AddSeconds(-1*timeGap);
+
+        var mockTokenExpirationDateTimeProvider = new Mock<IDateTimeProvider>();
+        mockTokenExpirationDateTimeProvider.Setup(dateTimeProvider => dateTimeProvider.GetDateTime())
+            .Returns(cashedDateTimeMinus10Minutes);
+
+        var tokenExpired = mockCurrentDateTimeProvider.Object.GetDateTime() > mockTokenExpirationDateTimeProvider.Object.GetDateTime();
+        if (!tokenExpired) throw new ArgumentException();
+
+        _sut = new IdentityService(passwordValidator: _passwordValidator,
+                   jwtOptions: _jwtOptions,
+                   dateTimeProvider: mockCurrentDateTimeProvider.Object,
+                   tokenValidationParameters: _tokenValidationParameters,
+                   identityUserRepository: _mockIdentityUserRepository.Object,
+                   securityTokenProvider: _securityTokenProvider,
+                   refreshTokenProvider: _refreshTokenProvider);
+        const string expectedErrorMessage = "Token hasn`t expired yet";
+
+        //var mockTomorrowDateTimeProvider = new Mock<IDateTimeProvider>();
+        //mockTomorrowDateTimeProvider.Setup(dateTimeProvider => dateTimeProvider.GetDateTime())
+        //    .Returns(DateTime.Today.AddDays(1));
+        //var yesterdayDateTimeProvider = mockTomorrowDateTimeProvider.Object;
+        
+        var identityUser = IdentityUserHelper.GetOne(Password);
+        var securityToken = new DefaultSecurityTokenProvider(_jwtOptions, mockTokenExpirationDateTimeProvider.Object).GetSecurityToken(identityUser);
+        var token = new JwtSecurityTokenHandler().WriteToken(securityToken);
+        var result = await _sut.RefreshTokenAsync(token, Password);
+
+        result.Should().BeOfType<AuthenticationResult>();
+        result.Errors.Should().Contain(expectedErrorMessage);
     }
 }

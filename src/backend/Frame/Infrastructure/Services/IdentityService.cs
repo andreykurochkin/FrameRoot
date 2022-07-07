@@ -86,7 +86,8 @@ public class IdentityService : IIdentityService
         var jwtExpClaim = claimsPrincipal.Claims.First(_ => _.Type == JwtRegisteredClaimNames.Exp);
         var expiryDateUnix = long.Parse(jwtExpClaim.Value);
         var expiryDateUnixUtc = new DateTime(year: 1970, month: 1, day: 1, hour: 0, minute: 0, second: 0, kind: DateTimeKind.Utc).AddSeconds(expiryDateUnix);
-        var tokenExpired = expiryDateUnixUtc > _dateTimeProvider.GetDateTime().ToUniversalTime();
+        var actualTime = _dateTimeProvider.GetDateTime().ToUniversalTime();
+        var tokenExpired = expiryDateUnixUtc > actualTime;
         if (!tokenExpired)
         {
             if (claimsPrincipal is null)
