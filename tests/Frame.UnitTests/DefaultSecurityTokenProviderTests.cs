@@ -66,11 +66,6 @@ public class DefaultSecurityTokenProviderTests
     [Fact]
     public void GetAccessToken_ShouldThrow_WhenTokenExpIsBeforeDateTimeUtcNow()
     {
-        var _jwtOptions = new JwtOptions
-        {
-            Secret = "01234567890123456789012345678912",
-            TokenLifeTime = new TimeSpan(0, 0, 15),
-        };
         var cashedDateTimeMinus10Minutes = DateTime.UtcNow.AddSeconds(-600);
         var mockTokenExpirationDateTimeProvider = new Mock<IDateTimeProvider>();
         mockTokenExpirationDateTimeProvider.Setup(dateTimeProvider => dateTimeProvider.GetDateTime())
@@ -96,8 +91,23 @@ public class DefaultSecurityTokenProviderTests
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
         };
 
-        var token = new JwtSecurityTokenHandler().CreateToken(tokenDescriptor);
 
-        token.Should().NotBeNull();
+        var func = () => new JwtSecurityTokenHandler().CreateToken(tokenDescriptor);
+        func.Should().NotThrow<ArgumentException>();
+    }
+
+    [Fact]
+    public void AlterGetAccessToken_ShouldThrow_WhenTokenExpIsBeforeDateTimeUtcNow()
+    {
+        var cashedDateTimeMinus10Minutes = DateTime.UtcNow.AddSeconds(-600);
+        var mockTokenExpirationDateTimeProvider = new Mock<IDateTimeProvider>();
+        mockTokenExpirationDateTimeProvider.Setup(dateTimeProvider => dateTimeProvider.GetDateTime())
+            .Returns(cashedDateTimeMinus10Minutes);
+        _sut = new DefaultSecurityTokenProvider(_jwtOptions, mockTokenExpirationDateTimeProvider.Object);
+
+        var identityUser = IdentityUserHelper.GetOne();
+
+        _sut = new DefaultSecurityTokenProvider(_jwtOptions, mockTokenExpirationDateTimeProvider.Object);
+        var t = _sut.GetSecurityToken(identityUser);
     }
 }
