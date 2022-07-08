@@ -17,7 +17,9 @@ using System.Threading.Tasks;
 using Xunit;
 
 namespace Frame.UnitTests;
-public class IdentityServiceTests
+
+[Collection("TokenSpecific Collection")]
+public class IdentityServiceTests : IClassFixture<Fixtures.TokenSpecificFixture>
 {
     private IdentityService _sut = null!;
     private Mock<IIdentityUserRepository> _mockIdentityUserRepository = new();
@@ -34,23 +36,9 @@ public class IdentityServiceTests
 
     public IdentityServiceTests()
     {
-        _jwtOptions = new JwtOptions
-        {
-            Secret = "01234567890123456789012345678912",
-            TokenLifeTime = new TimeSpan(0, 0, 15),
-        };
         _passwordValidator = new DefaultPasswordValidator(_hashProvider);
         _securityTokenProvider = new DefaultSecurityTokenProvider(_jwtOptions, _dateTimeProvider);
         _refreshTokenProvider = new DefaultRefreshTokenProvider(_dateTimeProvider);
-        _tokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_jwtOptions.Secret)),
-            ValidateIssuer = false,
-            ValidateAudience = false,
-            RequireExpirationTime = false,
-            ValidateLifetime = true,
-        };
     }
 
     [Fact]

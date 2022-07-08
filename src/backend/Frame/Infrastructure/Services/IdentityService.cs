@@ -77,6 +77,16 @@ public class IdentityService : IIdentityService
 
     public async Task<AuthenticationResult> RefreshTokenAsync(string? token, string? password)
     {
+        if (token is null)
+        {
+            return new AuthenticationResult { Errors = new[] { "Invalid token" } };
+        }
+
+        if (new JwtSecurityTokenHandler().CanReadToken(token))
+        {
+            return new AuthenticationResult { Errors = new[] { "Invalid token format" } };
+        }
+
         var claimsPrincipal = JwtSecurityTokenHelper.GetClaimsPrincipalFromToken(token, _tokenValidationParameters);
         if (claimsPrincipal is null)
         {

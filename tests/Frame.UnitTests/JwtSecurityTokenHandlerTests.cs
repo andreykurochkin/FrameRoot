@@ -1,6 +1,7 @@
 ﻿using FluentAssertions;
 using Frame.Infrastructure.Options;
 using Frame.Infrastructure.Providers.Base;
+using Frame.UnitTests.Fixtures;
 using Frame.UnitTests.Helpers;
 using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.IdentityModel.Tokens;
@@ -10,70 +11,58 @@ using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace Frame.UnitTests;
-public class DateTimeUtcNowFixture
-{
-    public DateTime UtcNow { get; private set; }
-    public DateTime TenMinutesBefore { get; private set; }
-    public Mock<IDateTimeProvider> mockDateTimeProvider { get; private set; } = new();
-    public JwtOptions JwtOptions { get; private set; }
-    public SigningCredentials SigningCredentials { get; private set; }
-    public SecurityTokenDescriptor SecurityTokenDescriptor { get; private set; }
-    public List<Claim> Claims { get; private set; }
-    public DateTimeUtcNowFixture()
-    {
-        UtcNow = DateTime.UtcNow;
-        TenMinutesBefore = UtcNow.AddMinutes(-10);
-        mockDateTimeProvider
-            .Setup(dateTimeProvider => dateTimeProvider.GetDateTime())
-            .Returns(TenMinutesBefore);
-        var claims = new Claim[]
-        {
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new Claim(JwtRegisteredClaimNames.Sub, IdentityUserHelper.GetOne().Email),
-            new Claim(JwtRegisteredClaimNames.Email, IdentityUserHelper.GetOne().Email),
-            new Claim("identityUserId", IdentityUserHelper.GetOne().Id.ToString()),
-        };
-        JwtOptions = new JwtOptions
-        {
-            Secret = "01234567890123456789012345678912",
-            TokenLifeTime = new TimeSpan(0, 0, 15),
-        };
-        byte[] key = Encoding.ASCII.GetBytes(JwtOptions.Secret);
-        SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature);
-        SecurityTokenDescriptor = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity(claims),
-            Expires = mockDateTimeProvider.Object.GetDateTime(),
-            SigningCredentials = SigningCredentials,
-        };
-    }
-}
 
-public class JwtSecurityTokenHandlerTests : IClassFixture<DateTimeUtcNowFixture>
+[Collection("TokenSpecific Collection")]
+public class JwtSecurityTokenHandlerTests : IClassFixture<TokenSpecificFixture>
 {
     private readonly ITestOutputHelper _testOutputHelper;
-    private readonly DateTimeUtcNowFixture _fixture;
+    private readonly TokenSpecificFixture _fixture;
+    private readonly JwtSecurityTokenHandler _sut = new();
 
-    public JwtSecurityTokenHandlerTests(ITestOutputHelper testOutputHelper, DateTimeUtcNowFixture fixture)
+    public JwtSecurityTokenHandlerTests(ITestOutputHelper testOutputHelper, TokenSpecificFixture fixture)
     {
         _testOutputHelper = testOutputHelper;
         _fixture = fixture;
     }
 
     [Fact]
-    public void FirstTest() => _testOutputHelper.WriteLine(_fixture.UtcNow.Ticks.ToString());
+    public void CreateToken_ShouldThrow_WhenFirstExpiryDateThenDateTimeNow()
+    {
+        Action act = () => _sut.CreateToken(_fixture.ExpiredSecurityTokenDescriptor);
+        
+        act.Should().Throw<ArgumentException>().WithMessage("*IDX12401*");
+    }
 
     [Fact]
-    public void SecondTest() => _testOutputHelper.WriteLine(_fixture.UtcNow.Ticks.ToString());
+    public void ValidateToken_ShouldThrow_WhenFirstTokenExpiresAndThenWaitForMoreThenSkewSecondsAndThenValidate()
+    {
+        var willExpireInTwoSeconds = new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(_fixture.Claims),
+            Expires = DateTime.UtcNow.AddSeconds(1),
+            SigningCredentials = _fixture.SigningCredentials,
+        };
+        var securityToken = _sut.CreateToken(willExpireInTwoSeconds);
+        var  token = _sut.WriteToken(securityToken);
+        Task.Delay(TimeSpan.FromSeconds(6)).Wait();
 
-    // should throw same error when
-    // time conditions [0 ... tokenExpiredDateTime ... DateTimeUctNow]
-    // 1. detemine methods that throw error [ TokenCreate, TokenValidate ]
-    // 01. how to unit test shared member
-    // 02. how to use traits
-    // 03. how to use constraints
+        var tokenValidationParameters = _fixture.TokenValidationParameters;
+        tokenValidationParameters.ClockSkew = TimeSpan.FromSeconds(2);
+        Action act = () => _sut.ValidateToken(token, tokenValidationParameters, out var validatedSecurityToken);
+
+        act.Should().Throw<SecurityTokenExpiredException>();
+    }
+
+    [Fact]
+    public void ValidateToken_ShouldThrow_WhenTokenIsExpired()
+    {
+        Action act = () => _sut.ValidateToken(_fixture.ExpiredToken, _fixture.TokenValidationParameters, out var validatedSecurityToken);
+
+        act.Should().Throw<SecurityTokenExpiredException>().WithMessage("*IDX10223*");
+    }
 }
