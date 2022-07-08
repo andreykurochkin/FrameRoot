@@ -7,6 +7,7 @@ using Frame.Infrastructure.Repositories.Base;
 using Frame.Infrastructure.Services;
 using Frame.Infrastructure.Validators;
 using Frame.Infrastructure.Validators.Base;
+using Frame.UnitTests.Fixtures;
 using Frame.UnitTests.Helpers;
 using Microsoft.IdentityModel.Tokens;
 using Moq;
@@ -15,14 +16,16 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Frame.UnitTests;
 
 [Collection("TokenSpecific Collection")]
 public class IdentityServiceTests : IClassFixture<Fixtures.TokenSpecificFixture>
 {
+    private readonly TokenSpecificFixture _fixture;
     private IdentityService _sut = null!;
-    private Mock<IIdentityUserRepository> _mockIdentityUserRepository = new();
+    private Mock<IIdentityUserRepository> _mockRepository = new();
     const string Email = "test@test.com";
     const string Password = "password";
     private ISaltProvider _saltProvider = new DefaultSaltProvider();
@@ -30,118 +33,86 @@ public class IdentityServiceTests : IClassFixture<Fixtures.TokenSpecificFixture>
     private IPasswordValidator _passwordValidator = null!;
     private IDateTimeProvider _dateTimeProvider = new DateTimeNowProvider();
     private ISecurityTokenProvider _securityTokenProvider;
-    private readonly JwtOptions _jwtOptions;
     private readonly IRefreshTokenProvider _refreshTokenProvider;
-    private readonly TokenValidationParameters _tokenValidationParameters;
+    ITestOutputHelper _testOutputHelper;
 
-    public IdentityServiceTests()
+    public IdentityServiceTests(ITestOutputHelper testOutputHelper, TokenSpecificFixture fixture)
     {
+        _testOutputHelper = testOutputHelper;
+
+        _fixture = fixture;
         _passwordValidator = new DefaultPasswordValidator(_hashProvider);
-        _securityTokenProvider = new DefaultSecurityTokenProvider(_jwtOptions, _dateTimeProvider);
+        _securityTokenProvider = new DefaultSecurityTokenProvider(_fixture.JwtOptions, _dateTimeProvider);
         _refreshTokenProvider = new DefaultRefreshTokenProvider(_dateTimeProvider);
+
+        //  if required unit may create it`s own _sut
+        _sut = new IdentityService(passwordValidator: _passwordValidator,
+                   jwtOptions: _fixture.JwtOptions,
+                   dateTimeProvider: _dateTimeProvider,
+                   tokenValidationParameters: _fixture.TokenValidationParameters,
+                   identityUserRepository: _mockRepository.Object,
+                   securityTokenProvider: _securityTokenProvider,
+                   refreshTokenProvider: _refreshTokenProvider);
     }
 
     [Fact]
     public async Task LoginAsync_ShouldReturnFailedAuthenticationResultWithExpectedMessage_WhenUserDoesNotExist()
     {
-        var expectedErrorMessage = "User doesn`t exist";
-        IdentityUser nullIdentityUser = null!;
-        _mockIdentityUserRepository
+        _mockRepository
             .Setup(repository => repository.FindByEmailAsync(It.IsNotNull<string>()))
-            .ReturnsAsync(nullIdentityUser);
-        _sut = new IdentityService(passwordValidator: _passwordValidator,
-                   jwtOptions: null!,
-                   dateTimeProvider: null!,
-                   tokenValidationParameters: null!,
-                   identityUserRepository: _mockIdentityUserRepository.Object,
-                   securityTokenProvider: null!,
-                   refreshTokenProvider: null!);
+            .ReturnsAsync(IdentityUserHelper.GetNull);
 
         var result = await _sut.LoginAsync(Email, Password);
 
-        result.Should().BeOfType<AuthenticationResult>();
         result.Succeded.Should().BeFalse();
-        result.Errors.Should().Contain(expectedErrorMessage);
+        result.Errors.Should().Contain("User doesn`t exist");
     }
 
     [Fact]
     public async Task LoginAsync_ShouldReturnFailedAuthenticationResultWithExpectedMessage_WhenProvidedPasswordAndStoredPasswordDontMatch()
     {
-        var expectedErrorMessage = "Bad login/password pair";
-        var identityUser = new IdentityUser
-        {
-            Password = Password,
-            Salt = _saltProvider.GetSalt(),
-        };
-        _mockIdentityUserRepository
+        _mockRepository
             .Setup(repository => repository.FindByEmailAsync(It.IsNotNull<string>()))
-            .ReturnsAsync(identityUser);
-        _sut = new IdentityService(passwordValidator: _passwordValidator,
-                   jwtOptions: null!,
-                   dateTimeProvider: null!,
-                   tokenValidationParameters: null!,
-                   identityUserRepository: _mockIdentityUserRepository.Object,
-                   securityTokenProvider: null!,
-                   refreshTokenProvider: null!);
-        var randomPassword = Guid.NewGuid().ToString();
+            .ReturnsAsync(IdentityUserHelper.GetOne());
 
-        var result = await _sut.LoginAsync(Email, randomPassword);
+        var result = await _sut.LoginAsync(Email, "new password");
 
-        result.Should().BeOfType<AuthenticationResult>();
         result.Succeded.Should().BeFalse();
-        result.Errors.Should().Contain(expectedErrorMessage);
+        result.Errors.Should().Contain("Bad login/password pair");
     }
 
     [Fact]
     public async Task LoginAsync_ShouldReturnSuccededAuthenticationResult_WhenDataIsValid()
     {
-        var salt = _saltProvider.GetSalt();
-        var saltAsBytes = Encoding.ASCII.GetBytes(salt);
-        var hashedPassword = await _hashProvider.GetHashAsync(Password, saltAsBytes);
-        var identityUser = new IdentityUser
-        {
-            Id = Guid.NewGuid().ToString(),
-            Email = Email,
-            Password = hashedPassword,
-            Salt = salt,
-        };
-
-        _mockIdentityUserRepository
+        _mockRepository
             .Setup(repository => repository.FindByEmailAsync(It.IsNotNull<string>()))
-            .ReturnsAsync(identityUser);
-        _sut = new IdentityService(passwordValidator: _passwordValidator,
-                   jwtOptions: _jwtOptions,
-                   dateTimeProvider: _dateTimeProvider,
-                   tokenValidationParameters: null!,
-                   identityUserRepository: _mockIdentityUserRepository.Object,
-                   securityTokenProvider: _securityTokenProvider,
-                   refreshTokenProvider: _refreshTokenProvider);
+            .ReturnsAsync(IdentityUserHelper.GetOne(Email, Password));
         
         var result = await _sut.LoginAsync(Email, Password);
 
-        result.Should().BeOfType<AuthenticationResult>();
         result.Succeded.Should().BeTrue();
         result.AccessToken.Should().NotBeNullOrEmpty();
         result.RefreshToken.Should().NotBeNullOrEmpty();
     }
 
     [Fact]
-    public async Task RefreshTokenAsync_ShouldReturnFailedAuthenticationResult_WhenClaimsPrincipalTakenFromTokenIsNull()
+    public async Task RefreshTokenAsync_ShouldReturnFailedAuthenticationResult_WhenTokenIsNull()
     {
-        _sut = new IdentityService(passwordValidator: _passwordValidator,
-                   jwtOptions: _jwtOptions,
-                   dateTimeProvider: _dateTimeProvider,
-                   tokenValidationParameters: _tokenValidationParameters,
-                   identityUserRepository: _mockIdentityUserRepository.Object,
-                   securityTokenProvider: _securityTokenProvider,
-                   refreshTokenProvider: _refreshTokenProvider);
-        const string expectedErrorMessage = "Invalid token";
+        var result = await _sut.RefreshTokenAsync(null, Password);
 
-        const string invalidToken = null!;
-        var result = await _sut.RefreshTokenAsync(invalidToken, Password);
+        result.Succeded.Should().BeFalse();
+        result.Errors.Should().Contain("Invalid token");
+    }
 
-        result.Should().BeOfType<AuthenticationResult>();
-        result.Errors.Should().Contain(expectedErrorMessage);
+    [Theory]
+    [InlineData("")]
+    [InlineData("not a jwt at all")]
+    public async Task RefreshTokenAsync_ShouldReturnFailedAuthenticationResult_WhenTokenFormatIsNotValid(string token)
+    {
+        var result = await _sut.RefreshTokenAsync(token, Password);
+
+        result.Succeded.Should().BeFalse();
+        result.Errors.Should().Contain("Invalid token format");
     }
 
     [Fact]
@@ -153,7 +124,7 @@ public class IdentityServiceTests : IClassFixture<Fixtures.TokenSpecificFixture>
         mockCurrentDateTimeProvider.Setup(dateTimeProvider => dateTimeProvider.GetDateTime())
             .Returns(cashedDateTime);
         
-        var timeGap = _jwtOptions.TokenLifeTime.TotalSeconds - 10;
+        var timeGap = _fixture.JwtOptions.TokenLifeTime.TotalSeconds - 10;
         var cashedDateTimeMinus10Minutes = cashedDateTime.AddSeconds(-1*timeGap);
 
         var mockTokenExpirationDateTimeProvider = new Mock<IDateTimeProvider>();
@@ -164,10 +135,10 @@ public class IdentityServiceTests : IClassFixture<Fixtures.TokenSpecificFixture>
         if (!tokenExpired) throw new ArgumentException();
 
         _sut = new IdentityService(passwordValidator: _passwordValidator,
-                   jwtOptions: _jwtOptions,
+                   jwtOptions: _fixture.JwtOptions,
                    dateTimeProvider: mockCurrentDateTimeProvider.Object,
-                   tokenValidationParameters: _tokenValidationParameters,
-                   identityUserRepository: _mockIdentityUserRepository.Object,
+                   tokenValidationParameters: _fixture.TokenValidationParameters,
+                   identityUserRepository: _mockRepository.Object,
                    securityTokenProvider: _securityTokenProvider,
                    refreshTokenProvider: _refreshTokenProvider);
         const string expectedErrorMessage = "Token hasn`t expired yet";
@@ -178,7 +149,7 @@ public class IdentityServiceTests : IClassFixture<Fixtures.TokenSpecificFixture>
         //var yesterdayDateTimeProvider = mockTomorrowDateTimeProvider.Object;
         
         var identityUser = IdentityUserHelper.GetOne(Password);
-        var securityToken = new DefaultSecurityTokenProvider(_jwtOptions, mockTokenExpirationDateTimeProvider.Object).GetSecurityToken(identityUser);
+        var securityToken = new DefaultSecurityTokenProvider(_fixture.JwtOptions, mockTokenExpirationDateTimeProvider.Object).GetSecurityToken(identityUser);
         var token = new JwtSecurityTokenHandler().WriteToken(securityToken);
         var result = await _sut.RefreshTokenAsync(token, Password);
 

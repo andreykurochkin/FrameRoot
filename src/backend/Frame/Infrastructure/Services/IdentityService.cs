@@ -60,7 +60,7 @@ public class IdentityService : IIdentityService
         return await GenerateAuthenticationResultForUserAsync(user);
     }
 
-    private async Task<AuthenticationResult> GenerateAuthenticationResultForUserAsync(Frame.Domain.IdentityUser identityUser)
+    private Task<AuthenticationResult> GenerateAuthenticationResultForUserAsync(Frame.Domain.IdentityUser identityUser)
     {
         var accessToken = _securityTokenProvider.GetSecurityToken(identityUser);
         var refreshToken = _refreshTokenProvider.GetRefreshToken(accessToken, identityUser);
@@ -72,7 +72,7 @@ public class IdentityService : IIdentityService
             AccessToken = jwtToken,
             RefreshToken = refreshToken.Token,
         };
-        return result;
+        return Task.FromResult(result);
     }
 
     public async Task<AuthenticationResult> RefreshTokenAsync(string? token, string? password)

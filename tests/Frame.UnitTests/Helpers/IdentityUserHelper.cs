@@ -7,7 +7,7 @@ using System.Text;
 namespace Frame.UnitTests.Helpers;
 public static class IdentityUserHelper
 {
-    public static IdentityUser GetOne(string password = "password", string email = "test@test.com")
+    public static IdentityUser GetOne(string email = "test@test.com", string password = "password")
     {
         var salt = new DefaultSaltProvider().GetSalt();
         var saltAsBytes = Encoding.ASCII.GetBytes(salt);
@@ -20,4 +20,6 @@ public static class IdentityUserHelper
             Salt = salt,
         };
     }
+
+    public static IdentityUser? GetNull() => null;
 }
