@@ -57,7 +57,7 @@ public class TokenSpecificFixture
             ValidateIssuer = false,
             ValidateAudience = false,
             RequireExpirationTime = false,
-            ValidateLifetime = true,
+            ValidateLifetime = false,
         };
         ExpiredSecurityTokenDescriptor = new SecurityTokenDescriptor
         {

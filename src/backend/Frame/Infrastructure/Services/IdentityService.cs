@@ -26,7 +26,7 @@ public class IdentityService : IIdentityService
                            TokenValidationParameters tokenValidationParameters/*,
                            IRefreshTokenRepository refreshTokenRepository*/,
                            IIdentityUserRepository identityUserRepository,
-                           ISecurityTokenProvider securityTokenProvider, 
+                           ISecurityTokenProvider securityTokenProvider,
                            IRefreshTokenProvider refreshTokenProvider)
     {
         _passwordValidator = passwordValidator;
@@ -60,7 +60,7 @@ public class IdentityService : IIdentityService
         return await GenerateAuthenticationResultForUserAsync(user);
     }
 
-    private Task<AuthenticationResult> GenerateAuthenticationResultForUserAsync(Frame.Domain.IdentityUser identityUser)
+    public Task<AuthenticationResult> GenerateAuthenticationResultForUserAsync(Frame.Domain.IdentityUser identityUser)
     {
         var accessToken = _securityTokenProvider.GetSecurityToken(identityUser);
         var refreshToken = _refreshTokenProvider.GetRefreshToken(accessToken, identityUser);
@@ -82,28 +82,30 @@ public class IdentityService : IIdentityService
             return new AuthenticationResult { Errors = new[] { "Invalid token" } };
         }
 
-        if (new JwtSecurityTokenHandler().CanReadToken(token))
+        var jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
+        if (!jwtSecurityTokenHandler.CanReadToken(token))
         {
             return new AuthenticationResult { Errors = new[] { "Invalid token format" } };
         }
 
-        var claimsPrincipal = JwtSecurityTokenHelper.GetClaimsPrincipalFromToken(token, _tokenValidationParameters);
-        if (claimsPrincipal is null)
+        ClaimsPrincipal? claimsPrincipal = GetClaimsPrincipalFromToken(jwtSecurityTokenHandler, token);
+        if (claimsPrincipal == null)
         {
             return new AuthenticationResult { Errors = new[] { "Invalid token" } };
         }
 
-        var jwtExpClaim = claimsPrincipal.Claims.First(_ => _.Type == JwtRegisteredClaimNames.Exp);
+        // this is additional validation in order to determine whether token expired
+        // first validation is performed via JwtSecurityTokenHandler.Validate method
+        // that class has internal DateTime.UtcNow check
+        // I don`t trust JwtSecurityTokenHandler.Validate and perform additional check
+        var jwtExpClaim = claimsPrincipal!.Claims.First(_ => _.Type == JwtRegisteredClaimNames.Exp);
         var expiryDateUnix = long.Parse(jwtExpClaim.Value);
         var expiryDateUnixUtc = new DateTime(year: 1970, month: 1, day: 1, hour: 0, minute: 0, second: 0, kind: DateTimeKind.Utc).AddSeconds(expiryDateUnix);
         var actualTime = _dateTimeProvider.GetDateTime().ToUniversalTime();
         var tokenExpired = expiryDateUnixUtc > actualTime;
         if (!tokenExpired)
         {
-            if (claimsPrincipal is null)
-            {
-                return new AuthenticationResult { Errors = new[] { "Token hasn`t expired yet" } };
-            }
+            return new AuthenticationResult { Errors = new[] { "Token hasn`t expired yet" } };
         }
 
         // todo uncomment
@@ -144,6 +146,18 @@ public class IdentityService : IIdentityService
         // return call to GenerateAuthenticationResultForUserAsync(via found user)
 
         throw new NotImplementedException();
+    }
+
+    private ClaimsPrincipal? GetClaimsPrincipalFromToken(JwtSecurityTokenHandler jwtSecurityTokenHandler, string? token)
+    {
+        try
+        {
+            return JwtSecurityTokenHelper.GetClaimsPrincipalFromToken(jwtSecurityTokenHandler, token, _tokenValidationParameters);
+        }
+        catch (Exception)
+        {
+            return null;
+        }
     }
 
     public Task<AuthenticationResult> RegisterUserAsync(string userName, string password)

@@ -116,9 +116,27 @@ public class IdentityServiceTests : IClassFixture<Fixtures.TokenSpecificFixture>
     }
 
     [Fact]
+    public async Task RefreshTokenAsync_ShouldReturnFailedAuthenticationResult_WhenAccessTokenRemainsExpired()
+    {
+        var result = await _sut.RefreshTokenAsync(_fixture.ExpiredToken, Password);
+        
+        result.Succeded.Should().BeFalse();
+        result.Errors.Should().Contain("Invalid token");
+    }
+
+    [Fact]
+    public async Task RefreshTokenAsync_ShouldReturnFailedAuthenticationResult_Bla()
+    {
+        var token = (await _sut.GenerateAuthenticationResultForUserAsync(IdentityUserHelper.GetOne())).AccessToken;
+
+        var result = await _sut.RefreshTokenAsync(token, Password);
+        result.Succeded.Should().BeFalse();
+        result.Errors.Should().Contain("Token hasn`t expired yet");
+    }
+
+    [Fact]
     public async Task RefreshTokenAsync_ShouldReturnFailedAuthenticationResult_WhenAccessTokenExpired()
     {
-        
         var cashedDateTime = DateTime.UtcNow;
         var mockCurrentDateTimeProvider = new Mock<IDateTimeProvider>();
         mockCurrentDateTimeProvider.Setup(dateTimeProvider => dateTimeProvider.GetDateTime())

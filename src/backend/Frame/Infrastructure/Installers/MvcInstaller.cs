@@ -24,7 +24,7 @@ public class MvcInstaller : IInstaller
             ValidateIssuer = false,
             ValidateAudience = false,
             RequireExpirationTime = false,
-            ValidateLifetime = true,
+            ValidateLifetime = false,
         };
         services.AddSingleton(tokenValidationParameters);
         services.AddSingleton(jwtOptions);
