@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
-
-namespace Frame.Domain;
+﻿namespace Frame.Domain;
 public class RefreshToken
 {
     public string? Token { get; set; } = null!;
@@ -9,6 +7,6 @@ public class RefreshToken
     public DateTime? ExpiryDate { get; set; }
     public bool Used { get; set; }
     public bool Invalidated { get; set; }
-    public IdentityUser<Guid>? User { get; set; }
+    public IdentityUser? User { get; set; }
     public string? UserId { get; set; }
 }

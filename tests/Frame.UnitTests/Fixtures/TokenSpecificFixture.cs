@@ -1,4 +1,5 @@
 ﻿using FluentAssertions;
+using Frame.Domain;
 using Frame.Infrastructure.Options;
 using Frame.Infrastructure.Providers.Base;
 using Frame.UnitTests.Helpers;
@@ -26,9 +27,15 @@ public class TokenSpecificFixture
 
     public string ExpiredToken { get; private set; }
 
+    public RefreshToken ExpiredRefreshToken { get; private set; }
+
     public List<Claim> Claims { get; private set; }
     public TokenSpecificFixture()
     {
+        ExpiredRefreshToken = new RefreshToken
+        {
+            User = IdentityUserHelper.GetOne(),
+        };    
         ExpiredToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJiNGU1YTFmYi1hODE1LTQ4N2ItYTg0OC1iMDZjYzRhNGMzZDEiLCJzdWIiOiJ0ZXN0QHRlc3QuY29tIiwiZW1haWwiOiJ0ZXN0QHRlc3QuY29tIiwiaWRlbnRpdHlVc2VySWQiOiIyZDc5NjE5Zi01MzRhLTRhNGEtOTJhNi1hZmUyNjljYTYwZGQiLCJuYmYiOjE2NTcyNjkyNTcsImV4cCI6MTY1NzI2OTI1OSwiaWF0IjoxNjU3MjY5MjU3fQ.S6sGap0trL2euXx--_XmnVPwynyYW97sJ5HpASunuBs";
 
         UtcNow = DateTime.UtcNow;

@@ -16,15 +16,15 @@ public class IdentityService : IIdentityService
     private readonly JwtOptions _jwtOptions;
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly TokenValidationParameters _tokenValidationParameters;
-    //private readonly IRefreshTokenRepository _refreshTokenRepository;
+    private readonly IRefreshTokenRepository _refreshTokenRepository;
     private readonly IIdentityUserRepository _identityUserRepository;
     private readonly ISecurityTokenProvider _securityTokenProvider;
     private readonly IRefreshTokenProvider _refreshTokenProvider;
     public IdentityService(Validators.Base.IPasswordValidator passwordValidator,
                            JwtOptions jwtOptions,
                            IDateTimeProvider dateTimeProvider,
-                           TokenValidationParameters tokenValidationParameters/*,
-                           IRefreshTokenRepository refreshTokenRepository*/,
+                           TokenValidationParameters tokenValidationParameters,
+                           IRefreshTokenRepository refreshTokenRepository,
                            IIdentityUserRepository identityUserRepository,
                            ISecurityTokenProvider securityTokenProvider,
                            IRefreshTokenProvider refreshTokenProvider)
@@ -36,7 +36,7 @@ public class IdentityService : IIdentityService
         _identityUserRepository = identityUserRepository;
         _securityTokenProvider = securityTokenProvider;
         _refreshTokenProvider = refreshTokenProvider;
-        //_refreshTokenRepository = refreshTokenRepository;
+        _refreshTokenRepository = refreshTokenRepository;
     }
 
     public async Task<AuthenticationResult> LoginAsync(string email, string password)
@@ -94,15 +94,11 @@ public class IdentityService : IIdentityService
             return new AuthenticationResult { Errors = new[] { "Invalid token" } };
         }
 
-        // this is additional validation in order to determine whether token expired
-        // first validation is performed via JwtSecurityTokenHandler.Validate method
-        // that class has internal DateTime.UtcNow check
-        // I don`t trust JwtSecurityTokenHandler.Validate and perform additional check
         var jwtExpClaim = claimsPrincipal!.Claims.First(_ => _.Type == JwtRegisteredClaimNames.Exp);
         var expiryDateUnix = long.Parse(jwtExpClaim.Value);
         var expiryDateUnixUtc = new DateTime(year: 1970, month: 1, day: 1, hour: 0, minute: 0, second: 0, kind: DateTimeKind.Utc).AddSeconds(expiryDateUnix);
         var actualTime = _dateTimeProvider.GetDateTime().ToUniversalTime();
-        var tokenExpired = expiryDateUnixUtc > actualTime;
+        var tokenExpired = expiryDateUnixUtc < actualTime;
         if (!tokenExpired)
         {
             return new AuthenticationResult { Errors = new[] { "Token hasn`t expired yet" } };
@@ -110,15 +106,23 @@ public class IdentityService : IIdentityService
 
         // todo uncomment
         // get refresh token from persistent via JwtId
-        //var jtiClaim = claimsPrincipal.Claims.Single(_ => _.Type == JwtRegisteredClaimNames.Jti);
-        //var storedRefreshToken = await _refreshTokenRepository.GetRefreshTokenByJwtIdAsync(jtiClaim.Value);
-        //if (storedRefreshToken is null)
-        //{
-        //    return new AuthenticationResult { Errors = new[] { "This refresh token doesn`t exit" } };
-        //}
+        bool persistentIsReady = true;
+        RefreshToken? storedRefreshToken = null!;
+        if (persistentIsReady)
+        {
+            var jtiClaim = claimsPrincipal.Claims.Single(_ => _.Type == JwtRegisteredClaimNames.Jti);
+            storedRefreshToken = await _refreshTokenRepository.GetRefreshTokenByJwtIdAsync(jtiClaim.Value);
+            if (storedRefreshToken is null)
+            {
+                return new AuthenticationResult { Errors = new[] { "This refresh token doesn`t exit" } };
+            }
+        }
+        else
+        {
+            //todo delete this
+            storedRefreshToken = new RefreshToken();
+        }
 
-        // todo delete this
-        var storedRefreshToken = new RefreshToken();
 
         var refreshTokenExpired = _dateTimeProvider.GetDateTime().ToUniversalTime() > storedRefreshToken.ExpiryDate;
         if (refreshTokenExpired)
@@ -140,7 +144,11 @@ public class IdentityService : IIdentityService
         // todo uncomment
         //await _refreshTokenRepository.SaveChangesAsync(storedRefreshToken);
 
-        var userIdFromClaimsPrincipal = claimsPrincipal.Claims.Single(_ => _.Type == "id");
+        var userIdFromClaimsPrincipal = claimsPrincipal.Claims.First(_ => _.Type == "identityUserId");
+        if (userIdFromClaimsPrincipal is null)
+        {
+            return new AuthenticationResult { Errors = new[] { "Claim identityUserId is required" } };
+        }
         var user = await _identityUserRepository.FindByIdAsync(userIdFromClaimsPrincipal.Value);
         return await GenerateAuthenticationResultForUserAsync(user);
         // return call to GenerateAuthenticationResultForUserAsync(via found user)

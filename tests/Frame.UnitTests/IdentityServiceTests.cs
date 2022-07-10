@@ -25,7 +25,7 @@ public class IdentityServiceTests : IClassFixture<Fixtures.TokenSpecificFixture>
 {
     private readonly TokenSpecificFixture _fixture;
     private IdentityService _sut = null!;
-    private Mock<IIdentityUserRepository> _mockRepository = new();
+    private Mock<IIdentityUserRepository> _mockIdentityUserRepository = new();
     const string Email = "test@test.com";
     const string Password = "password";
     private ISaltProvider _saltProvider = new DefaultSaltProvider();
@@ -35,6 +35,7 @@ public class IdentityServiceTests : IClassFixture<Fixtures.TokenSpecificFixture>
     private ISecurityTokenProvider _securityTokenProvider;
     private readonly IRefreshTokenProvider _refreshTokenProvider;
     ITestOutputHelper _testOutputHelper;
+    private Mock<IRefreshTokenRepository> _mockRefreshTokenRepository = new();
 
     public IdentityServiceTests(ITestOutputHelper testOutputHelper, TokenSpecificFixture fixture)
     {
@@ -50,15 +51,16 @@ public class IdentityServiceTests : IClassFixture<Fixtures.TokenSpecificFixture>
                    jwtOptions: _fixture.JwtOptions,
                    dateTimeProvider: _dateTimeProvider,
                    tokenValidationParameters: _fixture.TokenValidationParameters,
-                   identityUserRepository: _mockRepository.Object,
+                   identityUserRepository: _mockIdentityUserRepository.Object,
                    securityTokenProvider: _securityTokenProvider,
-                   refreshTokenProvider: _refreshTokenProvider);
+                   refreshTokenProvider: _refreshTokenProvider,
+                   refreshTokenRepository: _mockRefreshTokenRepository.Object);
     }
 
     [Fact]
     public async Task LoginAsync_ShouldReturnFailedAuthenticationResultWithExpectedMessage_WhenUserDoesNotExist()
     {
-        _mockRepository
+        _mockIdentityUserRepository
             .Setup(repository => repository.FindByEmailAsync(It.IsNotNull<string>()))
             .ReturnsAsync(IdentityUserHelper.GetNull);
 
@@ -71,7 +73,7 @@ public class IdentityServiceTests : IClassFixture<Fixtures.TokenSpecificFixture>
     [Fact]
     public async Task LoginAsync_ShouldReturnFailedAuthenticationResultWithExpectedMessage_WhenProvidedPasswordAndStoredPasswordDontMatch()
     {
-        _mockRepository
+        _mockIdentityUserRepository
             .Setup(repository => repository.FindByEmailAsync(It.IsNotNull<string>()))
             .ReturnsAsync(IdentityUserHelper.GetOne());
 
@@ -84,7 +86,7 @@ public class IdentityServiceTests : IClassFixture<Fixtures.TokenSpecificFixture>
     [Fact]
     public async Task LoginAsync_ShouldReturnSuccededAuthenticationResult_WhenDataIsValid()
     {
-        _mockRepository
+        _mockIdentityUserRepository
             .Setup(repository => repository.FindByEmailAsync(It.IsNotNull<string>()))
             .ReturnsAsync(IdentityUserHelper.GetOne(Email, Password));
         
@@ -116,22 +118,40 @@ public class IdentityServiceTests : IClassFixture<Fixtures.TokenSpecificFixture>
     }
 
     [Fact]
-    public async Task RefreshTokenAsync_ShouldReturnFailedAuthenticationResult_WhenAccessTokenRemainsExpired()
-    {
-        var result = await _sut.RefreshTokenAsync(_fixture.ExpiredToken, Password);
-        
-        result.Succeded.Should().BeFalse();
-        result.Errors.Should().Contain("Invalid token");
-    }
-
-    [Fact]
-    public async Task RefreshTokenAsync_ShouldReturnFailedAuthenticationResult_Bla()
+    public async Task RefreshTokenAsync_ShouldReturnFailedAuthenticationResult_WhenAccessTokenHasNotExpired()
     {
         var token = (await _sut.GenerateAuthenticationResultForUserAsync(IdentityUserHelper.GetOne())).AccessToken;
 
         var result = await _sut.RefreshTokenAsync(token, Password);
+
         result.Succeded.Should().BeFalse();
         result.Errors.Should().Contain("Token hasn`t expired yet");
+    }
+
+    [Fact]
+    public async Task RefreshTokenAsync_ShouldReturnFailedAuthenticationResult_WhenPersistentDoesNotHaveRefreshTokenWithSpecifiedJwtId()
+    {
+        _mockRefreshTokenRepository
+            .Setup(repository => repository.GetRefreshTokenByJwtIdAsync(It.IsNotNull<string>()))
+            .ReturnsAsync((RefreshToken)null!);
+
+        var result = await _sut.RefreshTokenAsync(_fixture.ExpiredToken, Password);
+
+        result.Succeded.Should().BeFalse();
+        result.Errors.Should().Contain("This refresh token doesn`t exit");
+    }
+
+    [Fact]
+    public async Task RefreshTokenAsync_ShouldReturnFailedAuthenticationResult_WhenRefreshTokenExpired()
+    {
+        _mockRefreshTokenRepository
+            .Setup(repository => repository.GetRefreshTokenByJwtIdAsync(It.IsNotNull<string>()))
+            .ReturnsAsync((RefreshToken)null!);
+
+        var result = await _sut.RefreshTokenAsync(_fixture.ExpiredToken, Password);
+
+        result.Succeded.Should().BeFalse();
+        result.Errors.Should().Contain("This refresh token doesn`t exit");
     }
 
     [Fact]
@@ -156,9 +176,10 @@ public class IdentityServiceTests : IClassFixture<Fixtures.TokenSpecificFixture>
                    jwtOptions: _fixture.JwtOptions,
                    dateTimeProvider: mockCurrentDateTimeProvider.Object,
                    tokenValidationParameters: _fixture.TokenValidationParameters,
-                   identityUserRepository: _mockRepository.Object,
+                   identityUserRepository: _mockIdentityUserRepository.Object,
                    securityTokenProvider: _securityTokenProvider,
-                   refreshTokenProvider: _refreshTokenProvider);
+                   refreshTokenProvider: _refreshTokenProvider,
+                   refreshTokenRepository: _mockRefreshTokenRepository.Object);
         const string expectedErrorMessage = "Token hasn`t expired yet";
 
         //var mockTomorrowDateTimeProvider = new Mock<IDateTimeProvider>();

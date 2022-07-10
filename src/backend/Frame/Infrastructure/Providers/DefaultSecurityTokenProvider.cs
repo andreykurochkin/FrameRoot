@@ -34,7 +34,6 @@ public class DefaultSecurityTokenProvider : ISecurityTokenProvider
             Subject = new ClaimsIdentity(claims),
             Expires = expires.ToUniversalTime(),
             SigningCredentials = CreateSigningCredentials(key),
-            //NotBefore = expires.ToUniversalTime().AddDays(1/*TimeSpan.FromDays(1)*/).ToUniversalTime(),
         };
         var tokenHandler = new JwtSecurityTokenHandler();
         try
