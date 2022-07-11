@@ -166,8 +166,16 @@ public class IdentityService : IIdentityService
         }
     }
 
-    public Task<AuthenticationResult> SignupAsync(string? email, string? password, string? confirmPassword)
+    public async Task<AuthenticationResult> SignupAsync(string? email, string? password, string? confirmPassword)
     {
+        var user = _identityUserRepository.FindByEmailAsync(email);
+        if (user is not null)
+        {
+            return new AuthenticationResult
+            {
+                Errors = new[] { "User with specified email already exists." }
+            };
+        }
         throw new NotImplementedException();
     }
 }

@@ -81,9 +81,9 @@ public class IdentityController : ControllerBase
         var authResponse = await _identityService.SignupAsync(userSignupRequest.Email, userSignupRequest.Password, userSignupRequest.ConfirmPassword);
         if (!authResponse.Succeded)
         {
-            return BadRequest(new AuthFailedResponse
+            return BadRequest(new AuthFailedUISpecificResponse
             {
-                Errors = authResponse.Errors
+                ModelFieldErrors = authResponse.ModelFieldErrors
             });
         }
         return Ok(new AuthSuccessResponse
