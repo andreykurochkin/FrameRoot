@@ -94,6 +94,12 @@ public class IdentityService : IIdentityService
             return new AuthenticationResult { Errors = new[] { "Invalid token" } };
         }
 
+        var userIdFromClaimsPrincipal = claimsPrincipal.Claims.FirstOrDefault(_ => _.Type == "identityUserId");
+        if (userIdFromClaimsPrincipal is null)
+        {
+            return new AuthenticationResult { Errors = new[] { "Claim identityUserId is required" } };
+        }
+
         var jwtExpClaim = claimsPrincipal!.Claims.First(_ => _.Type == JwtRegisteredClaimNames.Exp);
         var expiryDateUnix = long.Parse(jwtExpClaim.Value);
         var expiryDateUnixUtc = new DateTime(year: 1970, month: 1, day: 1, hour: 0, minute: 0, second: 0, kind: DateTimeKind.Utc).AddSeconds(expiryDateUnix);
@@ -142,18 +148,10 @@ public class IdentityService : IIdentityService
 
         storedRefreshToken.Used = true;
         // todo uncomment
-        //await _refreshTokenRepository.SaveChangesAsync(storedRefreshToken);
+        await _refreshTokenRepository.SaveChangesAsync(storedRefreshToken);
 
-        var userIdFromClaimsPrincipal = claimsPrincipal.Claims.First(_ => _.Type == "identityUserId");
-        if (userIdFromClaimsPrincipal is null)
-        {
-            return new AuthenticationResult { Errors = new[] { "Claim identityUserId is required" } };
-        }
         var user = await _identityUserRepository.FindByIdAsync(userIdFromClaimsPrincipal.Value);
         return await GenerateAuthenticationResultForUserAsync(user);
-        // return call to GenerateAuthenticationResultForUserAsync(via found user)
-
-        throw new NotImplementedException();
     }
 
     private ClaimsPrincipal? GetClaimsPrincipalFromToken(JwtSecurityTokenHandler jwtSecurityTokenHandler, string? token)

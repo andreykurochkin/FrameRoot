@@ -89,7 +89,7 @@ public class IdentityServiceTests : IClassFixture<Fixtures.TokenSpecificFixture>
         _mockIdentityUserRepository
             .Setup(repository => repository.FindByEmailAsync(It.IsNotNull<string>()))
             .ReturnsAsync(IdentityUserHelper.GetOne(Email, Password));
-        
+
         var result = await _sut.LoginAsync(Email, Password);
 
         result.Succeded.Should().BeTrue();
@@ -146,53 +146,65 @@ public class IdentityServiceTests : IClassFixture<Fixtures.TokenSpecificFixture>
     {
         _mockRefreshTokenRepository
             .Setup(repository => repository.GetRefreshTokenByJwtIdAsync(It.IsNotNull<string>()))
-            .ReturnsAsync((RefreshToken)null!);
+            .ReturnsAsync(_fixture.ExpiredRefreshToken);
 
         var result = await _sut.RefreshTokenAsync(_fixture.ExpiredToken, Password);
 
         result.Succeded.Should().BeFalse();
-        result.Errors.Should().Contain("This refresh token doesn`t exit");
+        result.Errors.Should().Contain("This refresh token has expired");
     }
 
     [Fact]
-    public async Task RefreshTokenAsync_ShouldReturnFailedAuthenticationResult_WhenAccessTokenExpired()
+    public async Task RefreshTokenAsync_ShouldReturnFailedAuthenticationResult_WhenTokenDoesNotHaveClaimWithTypeIdentityUserId()
     {
-        var cashedDateTime = DateTime.UtcNow;
-        var mockCurrentDateTimeProvider = new Mock<IDateTimeProvider>();
-        mockCurrentDateTimeProvider.Setup(dateTimeProvider => dateTimeProvider.GetDateTime())
-            .Returns(cashedDateTime);
-        
-        var timeGap = _fixture.JwtOptions.TokenLifeTime.TotalSeconds - 10;
-        var cashedDateTimeMinus10Minutes = cashedDateTime.AddSeconds(-1*timeGap);
+        var result = await _sut.RefreshTokenAsync(_fixture.TokenWithoutIdentityUserId, Password);
 
-        var mockTokenExpirationDateTimeProvider = new Mock<IDateTimeProvider>();
-        mockTokenExpirationDateTimeProvider.Setup(dateTimeProvider => dateTimeProvider.GetDateTime())
-            .Returns(cashedDateTimeMinus10Minutes);
+        result.Succeded.Should().BeFalse();
+        result.Errors.Should().Contain("Claim identityUserId is required");
+    }
 
-        var tokenExpired = mockCurrentDateTimeProvider.Object.GetDateTime() > mockTokenExpirationDateTimeProvider.Object.GetDateTime();
-        if (!tokenExpired) throw new ArgumentException();
+    [Fact]
+    public async Task RefreshTokenAsync_ShouldReturnFailedAuthenticationResult_WhenRefreshTokenInvalidated()
+    {
+        _mockRefreshTokenRepository
+            .Setup(repository => repository.GetRefreshTokenByJwtIdAsync(It.IsNotNull<string>()))
+            .ReturnsAsync(_fixture.InvalidatedRefreshToken);
 
-        _sut = new IdentityService(passwordValidator: _passwordValidator,
-                   jwtOptions: _fixture.JwtOptions,
-                   dateTimeProvider: mockCurrentDateTimeProvider.Object,
-                   tokenValidationParameters: _fixture.TokenValidationParameters,
-                   identityUserRepository: _mockIdentityUserRepository.Object,
-                   securityTokenProvider: _securityTokenProvider,
-                   refreshTokenProvider: _refreshTokenProvider,
-                   refreshTokenRepository: _mockRefreshTokenRepository.Object);
-        const string expectedErrorMessage = "Token hasn`t expired yet";
+        var result = await _sut.RefreshTokenAsync(_fixture.ExpiredToken, Password);
 
-        //var mockTomorrowDateTimeProvider = new Mock<IDateTimeProvider>();
-        //mockTomorrowDateTimeProvider.Setup(dateTimeProvider => dateTimeProvider.GetDateTime())
-        //    .Returns(DateTime.Today.AddDays(1));
-        //var yesterdayDateTimeProvider = mockTomorrowDateTimeProvider.Object;
-        
-        var identityUser = IdentityUserHelper.GetOne(Password);
-        var securityToken = new DefaultSecurityTokenProvider(_fixture.JwtOptions, mockTokenExpirationDateTimeProvider.Object).GetSecurityToken(identityUser);
-        var token = new JwtSecurityTokenHandler().WriteToken(securityToken);
-        var result = await _sut.RefreshTokenAsync(token, Password);
+        result.Succeded.Should().BeFalse();
+        result.Errors.Should().Contain("This refresh token has been invalidated");
+    }
 
-        result.Should().BeOfType<AuthenticationResult>();
-        result.Errors.Should().Contain(expectedErrorMessage);
+    [Fact]
+    public async Task RefreshTokenAsync_ShouldReturnFailedAuthenticationResult_WhenRefreshTokenUsed()
+    {
+        _mockRefreshTokenRepository
+            .Setup(repository => repository.GetRefreshTokenByJwtIdAsync(It.IsNotNull<string>()))
+            .ReturnsAsync(_fixture.UsedRefreshToken);
+
+        var result = await _sut.RefreshTokenAsync(_fixture.ExpiredToken, Password);
+
+        result.Succeded.Should().BeFalse();
+        result.Errors.Should().Contain("This refresh token has been used");
+    }
+
+    [Fact]
+    public async Task RefreshTokenAsync_ShouldReturnSuccededAuthenticationResult_WhenDataIsValid()
+    {
+        _mockRefreshTokenRepository
+            .Setup(repository => repository.SaveChangesAsync(It.IsAny<RefreshToken>()));
+        _mockRefreshTokenRepository
+            .Setup(repository => repository.GetRefreshTokenByJwtIdAsync(It.IsNotNull<string>()))
+            .ReturnsAsync(_fixture.ValidRefreshToken);
+        _mockIdentityUserRepository
+            .Setup(repository => repository.FindByIdAsync(It.IsNotNull<string>()))
+            .ReturnsAsync(IdentityUserHelper.GetOne(Email, Password));
+
+        var result = await _sut.RefreshTokenAsync(_fixture.ExpiredToken, Password);
+
+        result.Succeded.Should().BeTrue();
+        result.AccessToken.Should().NotBeNullOrEmpty();
+        result.RefreshToken.Should().NotBeNullOrEmpty();
     }
 }
