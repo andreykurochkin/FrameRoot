@@ -19,7 +19,7 @@ public class IdentityController : ControllerBase
         _identityService = identityService;
     }
 
-    [HttpPost(ApiRoutes.Identity.Registration)]
+    [HttpPost(ApiRoutes.Identity.Signup)]
     public IActionResult Register()
     {
         return Ok("test1");
@@ -56,8 +56,8 @@ public class IdentityController : ControllerBase
         var authResponse = await _identityService.RefreshTokenAsync(refreshTokenRequest.Token, refreshTokenRequest.RefreshToken);
         if (!authResponse.Succeded)
         {
-            return BadRequest(new AuthFailedResponse 
-            { 
+            return BadRequest(new AuthFailedResponse
+            {
                 Errors = authResponse.Errors
             });
         }
@@ -65,6 +65,31 @@ public class IdentityController : ControllerBase
         {
             Token = authResponse.AccessToken,
             RefreshToken = authResponse.RefreshToken
+        });
+    }
+
+    [HttpPost(ApiRoutes.Identity.Signup)]
+    public async Task<IActionResult> Signup([FromBody] UserSignupRequest userSignupRequest)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(new AuthFailedResponse
+            {
+                Errors = ModelState.Values.SelectMany(_ => _.Errors.Select(error => error.ErrorMessage))
+            });
+        }
+        var authResponse = await _identityService.SignupAsync(userSignupRequest.Email, userSignupRequest.Password, userSignupRequest.ConfirmPassword);
+        if (!authResponse.Succeded)
+        {
+            return BadRequest(new AuthFailedResponse
+            {
+                Errors = authResponse.Errors
+            });
+        }
+        return Ok(new AuthSuccessResponse
+        {
+            Token = authResponse.AccessToken,
+            RefreshToken = authResponse.RefreshToken,
         });
     }
 }
