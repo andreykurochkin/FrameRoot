@@ -1,4 +1,5 @@
 ﻿using FluentAssertions;
+using Frame.Contracts.V1.Requests;
 using Frame.Domain;
 using Frame.Infrastructure.Options;
 using Frame.Infrastructure.Providers;
@@ -25,7 +26,7 @@ public class TokenSpecificFixture
     public JwtOptions JwtOptions { get; private set; }
     public SigningCredentials SigningCredentials { get; private set; }
     public SecurityTokenDescriptor ExpiredSecurityTokenDescriptor { get; private set; }
-    public TokenValidationParameters TokenValidationParameters { get; private set; } 
+    public TokenValidationParameters TokenValidationParameters { get; private set; }
 
     public string ExpiredToken { get; private set; }
     public string TokenWithoutIdentityUserId { get; private set; }
@@ -38,11 +39,25 @@ public class TokenSpecificFixture
     public const string Email = "test@test.com";
     public const string Password = "password";
 
+    public UserLoginRequest UserLoginRequest { get; private set; }
+
+    public RefreshTokenRequest RefreshTokenRequest { get; private set; }
+
     public List<Claim> Claims { get; private set; }
-    
+
     public TokenSpecificFixture()
     {
         ExpiredToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJiNGU1YTFmYi1hODE1LTQ4N2ItYTg0OC1iMDZjYzRhNGMzZDEiLCJzdWIiOiJ0ZXN0QHRlc3QuY29tIiwiZW1haWwiOiJ0ZXN0QHRlc3QuY29tIiwiaWRlbnRpdHlVc2VySWQiOiIyZDc5NjE5Zi01MzRhLTRhNGEtOTJhNi1hZmUyNjljYTYwZGQiLCJuYmYiOjE2NTcyNjkyNTcsImV4cCI6MTY1NzI2OTI1OSwiaWF0IjoxNjU3MjY5MjU3fQ.S6sGap0trL2euXx--_XmnVPwynyYW97sJ5HpASunuBs";
+        UserLoginRequest = new UserLoginRequest 
+        { 
+            Email = Email, 
+            Password = Password 
+        };
+        RefreshTokenRequest = new RefreshTokenRequest
+        {
+            Token = Guid.NewGuid().ToString(),
+            RefreshToken = ExpiredToken,
+        };
         UtcNow = DateTime.UtcNow;
         TenMinutesBefore = UtcNow.AddMinutes(-10);
         mockDateTimeProvider

@@ -3,5 +3,5 @@
 namespace Frame.Infrastructure.Validators.Base;
 public interface IPasswordValidator
 {
-    Task<IdentityResult> ValidateAsync(Frame.Domain.IdentityUser user, string password);
+    Task<IdentityResult> ValidateAsync(Frame.Domain.IdentityUser user, string? password);
 }

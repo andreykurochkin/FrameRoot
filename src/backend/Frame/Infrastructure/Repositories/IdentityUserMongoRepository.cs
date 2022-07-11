@@ -20,12 +20,12 @@ public class IdentityUserMongoRepository : IIdentityUserRepository
         var database = _mongoClient.GetDatabase(_mongoDbOptions.DatabaseName);
         _identityUsers = database.GetCollection<IdentityUser>(MongoCollectionName);
     }
-    public Task<IdentityUser?> FindByEmailAsync(string email)
+    public Task<IdentityUser?> FindByEmailAsync(string? email)
     {
         throw new NotImplementedException();
     }
 
-    public Task<IdentityUser>? FindByIdAsync(string id)
+    public Task<IdentityUser>? FindByIdAsync(string? id)
     {
         throw new NotImplementedException();
     }
@@ -35,9 +35,9 @@ public class IdentityUserMongoRepository : IIdentityUserRepository
         return await _identityUsers.Find(_ => true).ToListAsync();
     }
 
-    public async Task<IdentityUser> CreateAsync(IdentityUser identityUser)
+    public async Task<IdentityUser> CreateAsync(IdentityUser? identityUser)
     {
-        await _identityUsers.InsertOneAsync(identityUser);
+        await _identityUsers.InsertOneAsync(identityUser!);
         return identityUser;
     }
 }

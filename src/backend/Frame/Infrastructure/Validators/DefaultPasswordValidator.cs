@@ -13,7 +13,7 @@ public class DefaultPasswordValidator : IPasswordValidator
         _hashProvider = hashProvider;
     }
 
-    public async Task<IdentityResult> ValidateAsync(Domain.IdentityUser user, string password)
+    public async Task<IdentityResult> ValidateAsync(Domain.IdentityUser user, string? password)
     {
         var hashFromPersistent = user.Password;
         var salt = Encoding.ASCII.GetBytes(user.Salt);

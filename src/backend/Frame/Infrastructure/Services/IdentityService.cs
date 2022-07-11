@@ -39,7 +39,7 @@ public class IdentityService : IIdentityService
         _refreshTokenRepository = refreshTokenRepository;
     }
 
-    public async Task<AuthenticationResult> LoginAsync(string email, string password)
+    public async Task<AuthenticationResult> LoginAsync(string? email, string? password)
     {
         var user = await _identityUserRepository.FindByEmailAsync(email);
         if (user is null)

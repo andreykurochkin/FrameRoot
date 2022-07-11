@@ -13,40 +13,16 @@ namespace Frame.Controllers.V1;
 public class IdentityController : ControllerBase
 {
     private readonly IIdentityService _identityService;
-    private readonly IIdentityUserRepository _identityUserRepository;
 
-    public IdentityController(IIdentityService identityService,
-        IIdentityUserRepository identityUserRepository)
+    public IdentityController(IIdentityService identityService)
     {
         _identityService = identityService;
-        _identityUserRepository = identityUserRepository;
     }
 
     [HttpPost(ApiRoutes.Identity.Registration)]
     public IActionResult Register()
     {
         return Ok("test1");
-    }
-
-    [HttpGet(ApiRoutes.Identity.Test)]
-    public async Task<IActionResult> Test()
-    {
-        var user = new IdentityUser
-        {
-            //Id = Guid.NewGuid().ToString(),
-            Claims = new[]
-            {
-                new Claim(JwtRegisteredClaimNames.Typ, Guid.NewGuid().ToString())
-            },
-            Email = "Test@test.com",
-            FamilyName = "Mercury",
-            GivenName = "Freddie",
-            Salt = "salt",
-            Password = "pass",
-        };
-        await _identityUserRepository.CreateAsync(user);
-        return Ok();
-        //return Ok(await _identityUserRepository.GetAllAsync());
     }
 
     [HttpPost(ApiRoutes.Identity.Login)]
@@ -59,8 +35,7 @@ public class IdentityController : ControllerBase
                 Errors = ModelState.Values.SelectMany(modelStateEntry => modelStateEntry.Errors.Select(modelError => modelError.ErrorMessage))
             });
         }
-        // todo check nullable string
-        var authResponse = await _identityService.LoginAsync(userLoginRequest.Email!, userLoginRequest.Password!);
+        var authResponse = await _identityService.LoginAsync(userLoginRequest.Email, userLoginRequest.Password);
         if (!authResponse.Succeded)
         {
             return BadRequest(new AuthFailedResponse
