@@ -41,9 +41,9 @@ public class DefaultSecurityTokenProvider : ISecurityTokenProvider
             var result = tokenHandler.CreateToken(tokenDescriptor);
             return result;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            throw ex;
+            throw;
         }
     }
 

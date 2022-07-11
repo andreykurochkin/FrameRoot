@@ -35,6 +35,9 @@ public class TokenSpecificFixture
     public RefreshToken UsedRefreshToken { get; private set; }
     public RefreshToken ValidRefreshToken { get; private set; }
 
+    public const string Email = "test@test.com";
+    public const string Password = "password";
+
     public List<Claim> Claims { get; private set; }
     
     public TokenSpecificFixture()

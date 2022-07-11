@@ -4,6 +4,7 @@ using Frame.Controllers.V1;
 using Frame.Domain;
 using Frame.Infrastructure.Services;
 using Frame.Infrastructure.Services.Base;
+using Frame.UnitTests.Fixtures;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using System;
@@ -12,18 +13,25 @@ using Xunit;
 using Xunit.Abstractions;
 
 namespace Frame.UnitTests;
-public class IdentityControllerTests
+
+[Collection("TokenSpecific Collection")]
+public class IdentityControllerTests : IClassFixture<Fixtures.TokenSpecificFixture>
 {
     private IdentityController _sut = null!;
     private readonly ITestOutputHelper _testOutputHelper;
-    const string Email = "test@test.com";
-    const string Password = "pass";
-    private readonly UserLoginRequest _userLoginRequest = new UserLoginRequest { Email = Email, Password = Password };
     private readonly Mock<IIdentityService> _moqIdentityService = new Mock<IIdentityService>();
+    private readonly TokenSpecificFixture _fixture;
+    private readonly UserLoginRequest _userLoginRequest;
 
-    public IdentityControllerTests(ITestOutputHelper testOutputHelper)
+    public IdentityControllerTests(ITestOutputHelper testOutputHelper, TokenSpecificFixture fixture) 
     {
         _testOutputHelper = testOutputHelper;
+        _fixture = fixture;
+        _userLoginRequest = new UserLoginRequest 
+        { 
+            Email = TokenSpecificFixture.Email, 
+            Password = TokenSpecificFixture.Password 
+        };
     }
 
     [Fact]
@@ -61,11 +69,5 @@ public class IdentityControllerTests
         var result = await _sut.Login(_userLoginRequest);
 
         result.Should().BeOfType<OkObjectResult>();
-    }
-
-    [Fact]
-    public async Task RefreshToken_ShouldReturnBadRequest_WhenDataIsNotValid()
-    {
-
     }
 }

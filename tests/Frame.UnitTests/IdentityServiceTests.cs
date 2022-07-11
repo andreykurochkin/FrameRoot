@@ -26,8 +26,6 @@ public class IdentityServiceTests : IClassFixture<Fixtures.TokenSpecificFixture>
     private readonly TokenSpecificFixture _fixture;
     private IdentityService _sut = null!;
     private Mock<IIdentityUserRepository> _mockIdentityUserRepository = new();
-    const string Email = "test@test.com";
-    const string Password = "password";
     private ISaltProvider _saltProvider = new DefaultSaltProvider();
     private IHashProvider _hashProvider = new DefaultHashProvider();
     private IPasswordValidator _passwordValidator = null!;
@@ -64,7 +62,7 @@ public class IdentityServiceTests : IClassFixture<Fixtures.TokenSpecificFixture>
             .Setup(repository => repository.FindByEmailAsync(It.IsNotNull<string>()))
             .ReturnsAsync(IdentityUserHelper.GetNull);
 
-        var result = await _sut.LoginAsync(Email, Password);
+        var result = await _sut.LoginAsync(TokenSpecificFixture.Email, TokenSpecificFixture.Password);
 
         result.Succeded.Should().BeFalse();
         result.Errors.Should().Contain("User doesn`t exist");
@@ -77,7 +75,7 @@ public class IdentityServiceTests : IClassFixture<Fixtures.TokenSpecificFixture>
             .Setup(repository => repository.FindByEmailAsync(It.IsNotNull<string>()))
             .ReturnsAsync(IdentityUserHelper.GetOne());
 
-        var result = await _sut.LoginAsync(Email, "new password");
+        var result = await _sut.LoginAsync(TokenSpecificFixture.Email, "new password");
 
         result.Succeded.Should().BeFalse();
         result.Errors.Should().Contain("Bad login/password pair");
@@ -88,9 +86,9 @@ public class IdentityServiceTests : IClassFixture<Fixtures.TokenSpecificFixture>
     {
         _mockIdentityUserRepository
             .Setup(repository => repository.FindByEmailAsync(It.IsNotNull<string>()))
-            .ReturnsAsync(IdentityUserHelper.GetOne(Email, Password));
+            .ReturnsAsync(IdentityUserHelper.GetOne(TokenSpecificFixture.Email, TokenSpecificFixture.Password));
 
-        var result = await _sut.LoginAsync(Email, Password);
+        var result = await _sut.LoginAsync(TokenSpecificFixture.Email, TokenSpecificFixture.Password);
 
         result.Succeded.Should().BeTrue();
         result.AccessToken.Should().NotBeNullOrEmpty();
@@ -100,7 +98,7 @@ public class IdentityServiceTests : IClassFixture<Fixtures.TokenSpecificFixture>
     [Fact]
     public async Task RefreshTokenAsync_ShouldReturnFailedAuthenticationResult_WhenTokenIsNull()
     {
-        var result = await _sut.RefreshTokenAsync(null, Password);
+        var result = await _sut.RefreshTokenAsync(null, TokenSpecificFixture.Password);
 
         result.Succeded.Should().BeFalse();
         result.Errors.Should().Contain("Invalid token");
@@ -111,7 +109,7 @@ public class IdentityServiceTests : IClassFixture<Fixtures.TokenSpecificFixture>
     [InlineData("not a jwt at all")]
     public async Task RefreshTokenAsync_ShouldReturnFailedAuthenticationResult_WhenTokenFormatIsNotValid(string token)
     {
-        var result = await _sut.RefreshTokenAsync(token, Password);
+        var result = await _sut.RefreshTokenAsync(token, TokenSpecificFixture.Password);
 
         result.Succeded.Should().BeFalse();
         result.Errors.Should().Contain("Invalid token format");
@@ -122,7 +120,7 @@ public class IdentityServiceTests : IClassFixture<Fixtures.TokenSpecificFixture>
     {
         var token = (await _sut.GenerateAuthenticationResultForUserAsync(IdentityUserHelper.GetOne())).AccessToken;
 
-        var result = await _sut.RefreshTokenAsync(token, Password);
+        var result = await _sut.RefreshTokenAsync(token, TokenSpecificFixture.Password);
 
         result.Succeded.Should().BeFalse();
         result.Errors.Should().Contain("Token hasn`t expired yet");
@@ -135,7 +133,7 @@ public class IdentityServiceTests : IClassFixture<Fixtures.TokenSpecificFixture>
             .Setup(repository => repository.GetRefreshTokenByJwtIdAsync(It.IsNotNull<string>()))
             .ReturnsAsync((RefreshToken)null!);
 
-        var result = await _sut.RefreshTokenAsync(_fixture.ExpiredToken, Password);
+        var result = await _sut.RefreshTokenAsync(_fixture.ExpiredToken, TokenSpecificFixture.Password);
 
         result.Succeded.Should().BeFalse();
         result.Errors.Should().Contain("This refresh token doesn`t exit");
@@ -148,7 +146,7 @@ public class IdentityServiceTests : IClassFixture<Fixtures.TokenSpecificFixture>
             .Setup(repository => repository.GetRefreshTokenByJwtIdAsync(It.IsNotNull<string>()))
             .ReturnsAsync(_fixture.ExpiredRefreshToken);
 
-        var result = await _sut.RefreshTokenAsync(_fixture.ExpiredToken, Password);
+        var result = await _sut.RefreshTokenAsync(_fixture.ExpiredToken, TokenSpecificFixture.Password);
 
         result.Succeded.Should().BeFalse();
         result.Errors.Should().Contain("This refresh token has expired");
@@ -157,7 +155,7 @@ public class IdentityServiceTests : IClassFixture<Fixtures.TokenSpecificFixture>
     [Fact]
     public async Task RefreshTokenAsync_ShouldReturnFailedAuthenticationResult_WhenTokenDoesNotHaveClaimWithTypeIdentityUserId()
     {
-        var result = await _sut.RefreshTokenAsync(_fixture.TokenWithoutIdentityUserId, Password);
+        var result = await _sut.RefreshTokenAsync(_fixture.TokenWithoutIdentityUserId, TokenSpecificFixture.Password);
 
         result.Succeded.Should().BeFalse();
         result.Errors.Should().Contain("Claim identityUserId is required");
@@ -170,7 +168,7 @@ public class IdentityServiceTests : IClassFixture<Fixtures.TokenSpecificFixture>
             .Setup(repository => repository.GetRefreshTokenByJwtIdAsync(It.IsNotNull<string>()))
             .ReturnsAsync(_fixture.InvalidatedRefreshToken);
 
-        var result = await _sut.RefreshTokenAsync(_fixture.ExpiredToken, Password);
+        var result = await _sut.RefreshTokenAsync(_fixture.ExpiredToken, TokenSpecificFixture.Password);
 
         result.Succeded.Should().BeFalse();
         result.Errors.Should().Contain("This refresh token has been invalidated");
@@ -183,7 +181,7 @@ public class IdentityServiceTests : IClassFixture<Fixtures.TokenSpecificFixture>
             .Setup(repository => repository.GetRefreshTokenByJwtIdAsync(It.IsNotNull<string>()))
             .ReturnsAsync(_fixture.UsedRefreshToken);
 
-        var result = await _sut.RefreshTokenAsync(_fixture.ExpiredToken, Password);
+        var result = await _sut.RefreshTokenAsync(_fixture.ExpiredToken, TokenSpecificFixture.Password);
 
         result.Succeded.Should().BeFalse();
         result.Errors.Should().Contain("This refresh token has been used");
@@ -199,9 +197,9 @@ public class IdentityServiceTests : IClassFixture<Fixtures.TokenSpecificFixture>
             .ReturnsAsync(_fixture.ValidRefreshToken);
         _mockIdentityUserRepository
             .Setup(repository => repository.FindByIdAsync(It.IsNotNull<string>()))
-            .ReturnsAsync(IdentityUserHelper.GetOne(Email, Password));
+            .ReturnsAsync(IdentityUserHelper.GetOne(TokenSpecificFixture.Email, TokenSpecificFixture.Password));
 
-        var result = await _sut.RefreshTokenAsync(_fixture.ExpiredToken, Password);
+        var result = await _sut.RefreshTokenAsync(_fixture.ExpiredToken, TokenSpecificFixture.Password);
 
         result.Succeded.Should().BeTrue();
         result.AccessToken.Should().NotBeNullOrEmpty();
