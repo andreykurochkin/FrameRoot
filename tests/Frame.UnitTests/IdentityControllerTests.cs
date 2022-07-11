@@ -30,7 +30,7 @@ public class IdentityControllerTests
     public async Task Login_ShouldReturnBadRequest_WhenModelStateIsNotValid()
     {
         _sut = new IdentityController(identityService: null!, identityUserRepository: null!);
-        _sut.ModelState.AddModelError(nameof(ArgumentException), "Bad user login reques");
+        _sut.ModelState.AddModelError(nameof(ArgumentException), "Bad user login request");
 
         var result = await _sut.Login(_userLoginRequest);
 
@@ -61,5 +61,11 @@ public class IdentityControllerTests
         var result = await _sut.Login(_userLoginRequest);
 
         result.Should().BeOfType<OkObjectResult>();
+    }
+
+    [Fact]
+    public async Task RefreshToken_ShouldReturnBadRequest_WhenDataIsNotValid()
+    {
+
     }
 }

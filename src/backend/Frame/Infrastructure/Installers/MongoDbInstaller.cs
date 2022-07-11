@@ -30,5 +30,6 @@ public class MongoDbInstaller : IInstaller
         services.AddSingleton(mongoDbOptions);
         services.AddSingleton<IMongoClient>(new MongoClient());
         services.AddScoped<IIdentityUserRepository, IdentityUserMongoRepository>();
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenMongoRepository>();
     }
 }
