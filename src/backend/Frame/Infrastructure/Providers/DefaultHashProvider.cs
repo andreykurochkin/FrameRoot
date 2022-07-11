@@ -4,12 +4,12 @@ using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 namespace Frame.Infrastructure.Providers;
 public class DefaultHashProvider : IHashProvider
 {
-    public async Task<string> GetHashAsync(string password, byte[] salt)
+    public async Task<string> GetHashAsync(string? password, byte[] salt)
     {
         var result = await Task.Run<string>(() =>
         {
             var derivedKey = KeyDerivation.Pbkdf2(
-            password: password,
+            password: password!,
             salt: salt,
             KeyDerivationPrf.HMACSHA256,
             iterationCount: 100000,

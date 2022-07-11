@@ -42,6 +42,7 @@ public class TokenSpecificFixture
     public UserLoginRequest UserLoginRequest { get; private set; }
 
     public RefreshTokenRequest RefreshTokenRequest { get; private set; }
+    public UserSignupRequest UserSignupRequest { get; private set; }
 
     public List<Claim> Claims { get; private set; }
 
@@ -133,6 +134,16 @@ public class TokenSpecificFixture
             Token = ExpiredToken,
             UserId = IdentityUserHelper.GetOne().Id,
             Used = true,
+        };
+
+        UserSignupRequest = new UserSignupRequest
+        { 
+            ConfirmPassword = Password,
+            Email = Email,
+            Password = Password,
+            GivenName = "Freddie",
+            FamilyName = "Mercury",
+            Ts = UtcNow
         };
     }
 }

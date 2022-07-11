@@ -166,7 +166,7 @@ public class IdentityService : IIdentityService
         }
     }
 
-    public Task<AuthenticationResult> SignupAsync(string userName, string password)
+    public Task<AuthenticationResult> SignupAsync(string? email, string? password, string? confirmPassword)
     {
         throw new NotImplementedException();
     }

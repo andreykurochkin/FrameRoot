@@ -25,7 +25,7 @@ public class IdentityControllerTests : IClassFixture<Fixtures.TokenSpecificFixtu
     private readonly Mock<IIdentityUserRepository> _mockIdentityUserRepository = new Mock<IIdentityUserRepository>();
     private readonly TokenSpecificFixture _fixture;
 
-    public IdentityControllerTests(ITestOutputHelper testOutputHelper, TokenSpecificFixture fixture) 
+    public IdentityControllerTests(ITestOutputHelper testOutputHelper, TokenSpecificFixture fixture)
     {
         _testOutputHelper = testOutputHelper;
         _fixture = fixture;
@@ -74,7 +74,7 @@ public class IdentityControllerTests : IClassFixture<Fixtures.TokenSpecificFixtu
             .ReturnsAsync(AuthenticationResultHelper.GetFailedOne);
 
         var result = await _sut.Refresh(_fixture.RefreshTokenRequest);
-     
+
         result.Should().BeOfType<BadRequestObjectResult>();
     }
 
@@ -88,5 +88,39 @@ public class IdentityControllerTests : IClassFixture<Fixtures.TokenSpecificFixtu
         var result = await _sut.Refresh(_fixture.RefreshTokenRequest);
 
         result.Should().BeOfType<BadRequestObjectResult>();
+    }
+
+    [Fact]
+    public async Task Signup_ShouldReturnBadRequest_WhenModelStateIsNotValid()
+    {
+        _sut.ModelState.AddModelError(nameof(ArgumentException), "Bad user login request");
+
+        var result = await _sut.Signup(_fixture.UserSignupRequest);
+
+        result.Should().BeOfType<BadRequestObjectResult>();
+    }
+
+    [Fact]
+    public async Task Signup_ShouldReturnBadRequest_WhenDataIsInValid()
+    {
+        _mockIdentityService
+            .Setup(service => service.SignupAsync(It.IsNotNull<string>(), It.IsNotNull<string>(), It.IsNotNull<string>()))
+            .ReturnsAsync(AuthenticationResultHelper.GetFailedOne);
+
+        var result = await _sut.Signup(_fixture.UserSignupRequest);
+
+        result.Should().BeOfType<BadRequestObjectResult>();
+    }
+
+    [Fact]
+    public async Task Signup_ShouldReturnOk_WhenDataIsValid()
+    {
+        _mockIdentityService
+            .Setup(service => service.SignupAsync(It.IsNotNull<string>(), It.IsNotNull<string>(), It.IsNotNull<string>()))
+            .ReturnsAsync(AuthenticationResultHelper.GetSuccededOne);
+
+        var result = await _sut.Signup(_fixture.UserSignupRequest);
+
+        result.Should().BeOfType<OkObjectResult>();
     }
 }
