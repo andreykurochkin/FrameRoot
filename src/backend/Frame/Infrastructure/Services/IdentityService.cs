@@ -1,4 +1,5 @@
-﻿using Frame.Domain;
+﻿using Frame.Contracts.V1.Responses;
+using Frame.Domain;
 using Frame.Infrastructure.Helpers;
 using Frame.Infrastructure.Options;
 using Frame.Infrastructure.Providers.Base;
@@ -166,6 +167,9 @@ public class IdentityService : IIdentityService
         }
     }
 
+    private const string email = "email";
+    private const string password = "password";
+
     public async Task<AuthenticationResult> SignupAsync(string? email, string? password, string? confirmPassword)
     {
         var user = _identityUserRepository.FindByEmailAsync(email);
@@ -173,9 +177,20 @@ public class IdentityService : IIdentityService
         {
             return new AuthenticationResult
             {
-                Errors = new[] { "User with specified email already exists." }
+                ModelFieldErrors = new [] { new ModelEmailFieldError("User with specified email already exists.") },
             };
         }
+
+        if (!string.Equals(password, confirmPassword))
+        {
+            return new AuthenticationResult
+            {
+                ModelFieldErrors = new [] { new ModelPasswordFieldError("Password and confirm password do not match.") }
+            };
+        }
+
+
+
         throw new NotImplementedException();
     }
 }
