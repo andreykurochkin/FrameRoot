@@ -10,17 +10,19 @@ public class DefaultIdentityUserProvider : IIdentityUserProvider
 {
     private readonly ISaltProvider _saltProvider;
     private readonly IHashProvider _hashProvider;
+    private readonly IGuidProvider _guidProvider;
 
-    public DefaultIdentityUserProvider(ISaltProvider saltProvider, IHashProvider hashProvider)
+    public DefaultIdentityUserProvider(ISaltProvider saltProvider, IHashProvider hashProvider, IGuidProvider guidProvider)
     {
         _saltProvider = saltProvider;
         _hashProvider = hashProvider;
+        _guidProvider = guidProvider;
     }
 
     public async Task<IdentityUser> GetIdentityUserAsync(string email, string password, string familyName, string givenName)
     {
         var salt = _saltProvider.GetSalt();
-        var newUserId = Guid.NewGuid().ToString();
+        var newUserId = _guidProvider.GetGuid() /*Guid.NewGuid().ToString()*/;
         var claims = CreateClaims(email, newUserId);
         var identityUser = new IdentityUser
         {
@@ -39,7 +41,7 @@ public class DefaultIdentityUserProvider : IIdentityUserProvider
     {
         var claims = new List<Claim>()
         {
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim(JwtRegisteredClaimNames.Jti, _guidProvider.GetGuid()/*Guid.NewGuid().ToString()*/),
             new Claim(JwtRegisteredClaimNames.Sub, email),
             new Claim(JwtRegisteredClaimNames.Email, email),
             new Claim("identityUserId", userId),

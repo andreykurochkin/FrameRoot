@@ -36,7 +36,7 @@ public class IdentityServiceTests : IClassFixture<Fixtures.TokenSpecificFixture>
     private readonly IRefreshTokenProvider _refreshTokenProvider;
     ITestOutputHelper _testOutputHelper;
     private Mock<IRefreshTokenRepository> _mockRefreshTokenRepository = new();
-    private readonly AbstractValidator<UserSignupRequest> _userSignupRequestValidator;
+    private readonly IValidator<UserSignupRequest> _userSignupRequestValidator;
     private readonly IIdentityUserProvider _identityUserProvider;
     public IdentityServiceTests(ITestOutputHelper testOutputHelper, TokenSpecificFixture fixture)
     {

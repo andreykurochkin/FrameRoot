@@ -11,13 +11,15 @@ public class DefaultSecurityTokenProvider : ISecurityTokenProvider
 {
     private readonly JwtOptions _jwtOptions;
     private readonly IDateTimeProvider _dateTimeProvider;
+    private readonly IGuidProvider _guidProvider;
 
     public DefaultSecurityTokenProvider(
         JwtOptions jwtOptions,
-        IDateTimeProvider dateTimeProvider)
+        IDateTimeProvider dateTimeProvider, IGuidProvider guidProvider)
     {
         _jwtOptions = jwtOptions;
         _dateTimeProvider = dateTimeProvider;
+        _guidProvider = guidProvider;
     }
 
     private static SigningCredentials CreateSigningCredentials(byte[] key)
@@ -51,7 +53,7 @@ public class DefaultSecurityTokenProvider : ISecurityTokenProvider
     {
         var claims = new List<Claim>()
         {
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim(JwtRegisteredClaimNames.Jti, _guidProvider.GetGuid()/*Guid.NewGuid().ToString()*/),
             new Claim(JwtRegisteredClaimNames.Sub, identityUser.Email),
             new Claim(JwtRegisteredClaimNames.Email, identityUser.Email),
             new Claim("identityUserId", identityUser.Id.ToString()),

@@ -8,6 +8,8 @@ using Frame.Infrastructure.Options;
 using MongoDB.Driver;
 using Frame.Infrastructure.Repositories.Base;
 using Frame.Infrastructure.Repositories;
+using Frame.Infrastructure.Providers.Base;
+using Frame.Infrastructure.Providers;
 
 namespace Frame.Infrastructure.Installers;
 public class MongoDbInstaller : IInstaller
@@ -31,5 +33,6 @@ public class MongoDbInstaller : IInstaller
         services.AddSingleton<IMongoClient>(new MongoClient());
         services.AddScoped<IIdentityUserRepository, IdentityUserMongoRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenMongoRepository>();
+        services.AddScoped<IGuidProvider, MongoGuidProvider>();
     }
 }

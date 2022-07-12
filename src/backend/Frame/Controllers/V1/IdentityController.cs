@@ -19,12 +19,6 @@ public class IdentityController : ControllerBase
         _identityService = identityService;
     }
 
-    [HttpPost(ApiRoutes.Identity.Signup)]
-    public IActionResult Register()
-    {
-        return Ok("test1");
-    }
-
     [HttpPost(ApiRoutes.Identity.Login)]
     public async Task<IActionResult> Login([FromBody] UserLoginRequest userLoginRequest)
     {

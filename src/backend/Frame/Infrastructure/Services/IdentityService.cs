@@ -16,7 +16,7 @@ namespace Frame.Infrastructure.Services;
 public class IdentityService : IIdentityService
 {
     private readonly IIdentityUserProvider _identityUserProvider;
-    private readonly AbstractValidator<UserSignupRequest> _userSignupRequestValidator;
+    private readonly IValidator<UserSignupRequest> _userSignupRequestValidator;
     private readonly IPasswordHashValidator _passwordHashValidator;
     private readonly JwtOptions _jwtOptions;
     private readonly IDateTimeProvider _dateTimeProvider;
@@ -33,7 +33,7 @@ public class IdentityService : IIdentityService
                            IIdentityUserRepository identityUserRepository,
                            ISecurityTokenProvider securityTokenProvider,
                            IRefreshTokenProvider refreshTokenProvider,
-                           AbstractValidator<UserSignupRequest> userSignupRequestValidator, 
+                           IValidator<UserSignupRequest> userSignupRequestValidator, 
                            IIdentityUserProvider identityUserProvider)
     {
         _passwordHashValidator = passwordHashValidator;
@@ -200,8 +200,8 @@ public class IdentityService : IIdentityService
         }
 
         identityUser = await _identityUserProvider.GetIdentityUserAsync(email!, password!, familyName!, givenName!);
-        var storedIdentityUser = await _identityUserRepository.CreateAsync(identityUser);
-        return await GenerateAuthenticationResultForUserAsync(storedIdentityUser);
+        await _identityUserRepository.CreateAsync(identityUser);
+        return await GenerateAuthenticationResultForUserAsync(identityUser);
     }
 
     private FluentValidation.Results.ValidationResult Validate(

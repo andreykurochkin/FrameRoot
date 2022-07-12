@@ -1,6 +1,8 @@
 ﻿using FluentAssertions;
+using FluentValidation;
 using FluentValidation.TestHelper;
 using Frame.Contracts.V1.Requests;
+using Frame.Domain;
 using Frame.Infrastructure.Validators;
 using System.Collections;
 using System.Collections.Generic;
@@ -21,7 +23,7 @@ public class InvalidStrings : IEnumerable<object[]>
 
 public class UserSignupRequestValidatorTests
 {
-    private readonly UserSignupRequestValidator _sut;
+    private readonly IValidator<UserSignupRequest> _sut;
     public UserSignupRequestValidatorTests()
     {
         _sut = new UserSignupRequestValidator();

@@ -10,6 +10,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Frame.Infrastructure.Validators.Base;
 using Frame.Infrastructure.Validators;
+using Frame.Contracts.V1.Requests;
+using FluentValidation;
 
 namespace Frame.Infrastructure.Installers;
 public class MvcInstaller : IInstaller
@@ -49,7 +51,8 @@ public class MvcInstaller : IInstaller
         services.AddSingleton<IPasswordHashValidator, DefaultPasswordValidator>();
         services.AddSingleton<ISecurityTokenProvider, DefaultSecurityTokenProvider>();
         services.AddSingleton<IRefreshTokenProvider, DefaultRefreshTokenProvider>();
-
+        services.AddScoped<IValidator<UserSignupRequest>, UserSignupRequestValidator>();
+        services.AddScoped<IIdentityUserProvider, DefaultIdentityUserProvider>();
         services.AddControllers();
     }
 }
