@@ -38,16 +38,17 @@ public class IdentityServiceTests : IClassFixture<Fixtures.TokenSpecificFixture>
     private Mock<IRefreshTokenRepository> _mockRefreshTokenRepository = new();
     private readonly IValidator<UserSignupRequest> _userSignupRequestValidator;
     private readonly IIdentityUserProvider _identityUserProvider;
+    private readonly IGuidProvider _guidProvider = new MongoGuidProvider();
     public IdentityServiceTests(ITestOutputHelper testOutputHelper, TokenSpecificFixture fixture)
     {
         _testOutputHelper = testOutputHelper;
 
         _fixture = fixture;
         _passwordValidator = new DefaultPasswordValidator(_hashProvider);
-        _securityTokenProvider = new DefaultSecurityTokenProvider(_fixture.JwtOptions, _dateTimeProvider);
-        _refreshTokenProvider = new DefaultRefreshTokenProvider(_dateTimeProvider);
+        _securityTokenProvider = new DefaultSecurityTokenProvider(_fixture.JwtOptions, _dateTimeProvider, _guidProvider);
+        _refreshTokenProvider = new DefaultRefreshTokenProvider(_dateTimeProvider, _guidProvider);
         _userSignupRequestValidator = new UserSignupRequestValidator();
-        _identityUserProvider = new DefaultIdentityUserProvider(_saltProvider, _hashProvider);
+        _identityUserProvider = new DefaultIdentityUserProvider(_saltProvider, _hashProvider, _guidProvider);
 
         //  if required unit may create it`s own _sut
         _sut = new IdentityService(

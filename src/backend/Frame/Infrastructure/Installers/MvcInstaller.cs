@@ -49,8 +49,8 @@ public class MvcInstaller : IInstaller
         services.AddSingleton<ISaltProvider, DefaultSaltProvider>();
         services.AddSingleton<IHashProvider, DefaultHashProvider>();
         services.AddSingleton<IPasswordHashValidator, DefaultPasswordValidator>();
-        services.AddSingleton<ISecurityTokenProvider, DefaultSecurityTokenProvider>();
-        services.AddSingleton<IRefreshTokenProvider, DefaultRefreshTokenProvider>();
+        services.AddScoped<ISecurityTokenProvider, DefaultSecurityTokenProvider>();
+        services.AddScoped<IRefreshTokenProvider, DefaultRefreshTokenProvider>();
         services.AddScoped<IValidator<UserSignupRequest>, UserSignupRequestValidator>();
         services.AddScoped<IIdentityUserProvider, DefaultIdentityUserProvider>();
         services.AddControllers();

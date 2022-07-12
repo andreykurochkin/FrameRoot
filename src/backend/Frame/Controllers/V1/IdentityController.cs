@@ -80,10 +80,11 @@ public class IdentityController : ControllerBase
             userSignupRequest.FamilyName);
         if (!authResponse.Succeded)
         {
-            return BadRequest(new AuthFailedUISpecificResponse
+            var output = new AuthFailedUISpecificResponse
             {
-                ModelFieldErrors = authResponse.ModelFieldErrors
-            });
+                ModelFieldErrors = authResponse.ModelFieldErrors!.ToList()
+            };
+            return BadRequest(output.ModelFieldErrors.Select(_ => $"FieldName: {_.FieldName} Error: {_.Error}").ToList());
         }
         return Ok(new AuthSuccessResponse
         {
