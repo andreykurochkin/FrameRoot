@@ -78,7 +78,12 @@ public class IdentityController : ControllerBase
                 Errors = ModelState.Values.SelectMany(_ => _.Errors.Select(error => error.ErrorMessage))
             });
         }
-        var authResponse = await _identityService.SignupAsync(userSignupRequest.Email, userSignupRequest.Password, userSignupRequest.ConfirmPassword, userSignupRequest.GivenName, userSignupRequest.FamilyName);
+        var authResponse = await _identityService.SignupAsync(
+            userSignupRequest.Email,
+            userSignupRequest.Password,
+            userSignupRequest.ConfirmPassword,
+            userSignupRequest.GivenName,
+            userSignupRequest.FamilyName);
         if (!authResponse.Succeded)
         {
             return BadRequest(new AuthFailedUISpecificResponse
