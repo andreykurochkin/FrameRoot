@@ -104,7 +104,7 @@ public class IdentityControllerTests : IClassFixture<Fixtures.TokenSpecificFixtu
     public async Task Signup_ShouldReturnBadRequest_WhenDataIsInValid()
     {
         _mockIdentityService
-            .Setup(service => service.SignupAsync(It.IsNotNull<string>(), It.IsNotNull<string>(), It.IsNotNull<string>()))
+            .Setup(service => service.SignupAsync(It.IsNotNull<string>(), It.IsNotNull<string>(), It.IsNotNull<string>(), It.IsNotNull<string>(), It.IsNotNull<string>()))
             .ReturnsAsync(AuthenticationResultHelper.GetFailedOne);
 
         var result = await _sut.Signup(_fixture.UserSignupRequest);
@@ -116,7 +116,7 @@ public class IdentityControllerTests : IClassFixture<Fixtures.TokenSpecificFixtu
     public async Task Signup_ShouldReturnOk_WhenDataIsValid()
     {
         _mockIdentityService
-            .Setup(service => service.SignupAsync(It.IsNotNull<string>(), It.IsNotNull<string>(), It.IsNotNull<string>()))
+            .Setup(service => service.SignupAsync(It.IsNotNull<string>(), It.IsNotNull<string>(), It.IsNotNull<string>(), It.IsNotNull<string>(), It.IsNotNull<string>()))
             .ReturnsAsync(AuthenticationResultHelper.GetSuccededOne);
 
         var result = await _sut.Signup(_fixture.UserSignupRequest);

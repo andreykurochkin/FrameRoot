@@ -1,4 +1,6 @@
 ﻿using FluentAssertions;
+using FluentValidation;
+using Frame.Contracts.V1.Requests;
 using Frame.Domain;
 using Frame.Infrastructure.Options;
 using Frame.Infrastructure.Providers;
@@ -28,13 +30,14 @@ public class IdentityServiceTests : IClassFixture<Fixtures.TokenSpecificFixture>
     private Mock<IIdentityUserRepository> _mockIdentityUserRepository = new();
     private ISaltProvider _saltProvider = new DefaultSaltProvider();
     private IHashProvider _hashProvider = new DefaultHashProvider();
-    private IPasswordValidator _passwordValidator = null!;
+    private IPasswordHashValidator _passwordValidator = null!;
     private IDateTimeProvider _dateTimeProvider = new DateTimeNowProvider();
     private ISecurityTokenProvider _securityTokenProvider;
     private readonly IRefreshTokenProvider _refreshTokenProvider;
     ITestOutputHelper _testOutputHelper;
     private Mock<IRefreshTokenRepository> _mockRefreshTokenRepository = new();
-
+    private readonly AbstractValidator<UserSignupRequest> _userSignupRequestValidator;
+    private readonly IIdentityUserProvider _identityUserProvider;
     public IdentityServiceTests(ITestOutputHelper testOutputHelper, TokenSpecificFixture fixture)
     {
         _testOutputHelper = testOutputHelper;
@@ -43,16 +46,21 @@ public class IdentityServiceTests : IClassFixture<Fixtures.TokenSpecificFixture>
         _passwordValidator = new DefaultPasswordValidator(_hashProvider);
         _securityTokenProvider = new DefaultSecurityTokenProvider(_fixture.JwtOptions, _dateTimeProvider);
         _refreshTokenProvider = new DefaultRefreshTokenProvider(_dateTimeProvider);
+        _userSignupRequestValidator = new UserSignupRequestValidator();
+        _identityUserProvider = new DefaultIdentityUserProvider(_saltProvider, _hashProvider);
 
         //  if required unit may create it`s own _sut
-        _sut = new IdentityService(passwordValidator: _passwordValidator,
-                   jwtOptions: _fixture.JwtOptions,
-                   dateTimeProvider: _dateTimeProvider,
-                   tokenValidationParameters: _fixture.TokenValidationParameters,
-                   identityUserRepository: _mockIdentityUserRepository.Object,
-                   securityTokenProvider: _securityTokenProvider,
-                   refreshTokenProvider: _refreshTokenProvider,
-                   refreshTokenRepository: _mockRefreshTokenRepository.Object);
+        _sut = new IdentityService(
+            passwordHashValidator: _passwordValidator,
+            jwtOptions: _fixture.JwtOptions,
+            dateTimeProvider: _dateTimeProvider,
+            tokenValidationParameters: _fixture.TokenValidationParameters,
+            refreshTokenRepository: _mockRefreshTokenRepository.Object,
+            identityUserRepository: _mockIdentityUserRepository.Object,
+            securityTokenProvider: _securityTokenProvider,
+            refreshTokenProvider: _refreshTokenProvider,
+            userSignupRequestValidator: _userSignupRequestValidator,
+            identityUserProvider: _identityUserProvider);
     }
 
     [Fact]
@@ -204,5 +212,17 @@ public class IdentityServiceTests : IClassFixture<Fixtures.TokenSpecificFixture>
         result.Succeded.Should().BeTrue();
         result.AccessToken.Should().NotBeNullOrEmpty();
         result.RefreshToken.Should().NotBeNullOrEmpty();
+    }
+
+    [Fact]
+    public async Task SignupAsync_ShouldFail_WhenPasswordAndConfirmPasswordAreSame()
+    {
+        _mockIdentityUserRepository
+            .Setup(repository => repository.FindByEmailAsync(It.IsNotNull<string>()))
+            .ReturnsAsync((IdentityUser)null!);
+
+        var result = await _sut.SignupAsync(TokenSpecificFixture.Email, TokenSpecificFixture.Password, TokenSpecificFixture.Password, "John", "Smith");
+
+        result.Succeded!.Should().BeFalse();
     }
 }

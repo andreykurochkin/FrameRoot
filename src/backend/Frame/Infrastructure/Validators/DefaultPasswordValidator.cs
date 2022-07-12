@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using System.Text;
 
 namespace Frame.Infrastructure.Validators;
-public class DefaultPasswordValidator : IPasswordValidator
+public class DefaultPasswordValidator : IPasswordHashValidator
 {
     private readonly IHashProvider _hashProvider;
 

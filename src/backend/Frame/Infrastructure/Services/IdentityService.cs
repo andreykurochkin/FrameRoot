@@ -1,19 +1,23 @@
-﻿using Frame.Contracts.V1.Responses;
+﻿using FluentValidation;
+using Frame.Contracts.V1.Requests;
+using Frame.Contracts.V1.Responses;
 using Frame.Domain;
 using Frame.Infrastructure.Helpers;
 using Frame.Infrastructure.Options;
 using Frame.Infrastructure.Providers.Base;
 using Frame.Infrastructure.Repositories.Base;
 using Frame.Infrastructure.Services.Base;
+using Frame.Infrastructure.Validators.Base;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
 
 namespace Frame.Infrastructure.Services;
 public class IdentityService : IIdentityService
 {
-    private readonly Validators.Base.IPasswordValidator _passwordValidator;
+    private readonly IIdentityUserProvider _identityUserProvider;
+    private readonly AbstractValidator<UserSignupRequest> _userSignupRequestValidator;
+    private readonly IPasswordHashValidator _passwordHashValidator;
     private readonly JwtOptions _jwtOptions;
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly TokenValidationParameters _tokenValidationParameters;
@@ -21,16 +25,18 @@ public class IdentityService : IIdentityService
     private readonly IIdentityUserRepository _identityUserRepository;
     private readonly ISecurityTokenProvider _securityTokenProvider;
     private readonly IRefreshTokenProvider _refreshTokenProvider;
-    public IdentityService(Validators.Base.IPasswordValidator passwordValidator,
+    public IdentityService(Validators.Base.IPasswordHashValidator passwordHashValidator,
                            JwtOptions jwtOptions,
                            IDateTimeProvider dateTimeProvider,
                            TokenValidationParameters tokenValidationParameters,
                            IRefreshTokenRepository refreshTokenRepository,
                            IIdentityUserRepository identityUserRepository,
                            ISecurityTokenProvider securityTokenProvider,
-                           IRefreshTokenProvider refreshTokenProvider)
+                           IRefreshTokenProvider refreshTokenProvider,
+                           AbstractValidator<UserSignupRequest> userSignupRequestValidator, 
+                           IIdentityUserProvider identityUserProvider)
     {
-        _passwordValidator = passwordValidator;
+        _passwordHashValidator = passwordHashValidator;
         _jwtOptions = jwtOptions;
         _dateTimeProvider = dateTimeProvider;
         _tokenValidationParameters = tokenValidationParameters;
@@ -38,6 +44,8 @@ public class IdentityService : IIdentityService
         _securityTokenProvider = securityTokenProvider;
         _refreshTokenProvider = refreshTokenProvider;
         _refreshTokenRepository = refreshTokenRepository;
+        _userSignupRequestValidator = userSignupRequestValidator;
+        _identityUserProvider = identityUserProvider;
     }
 
     public async Task<AuthenticationResult> LoginAsync(string? email, string? password)
@@ -50,7 +58,7 @@ public class IdentityService : IIdentityService
                 Errors = new[] { "User doesn`t exist" }
             };
         }
-        var identityResult = await _passwordValidator.ValidateAsync(user, password);
+        var identityResult = await _passwordHashValidator.ValidateAsync(user, password);
         if (!identityResult.Succeeded)
         {
             return new AuthenticationResult
@@ -167,30 +175,51 @@ public class IdentityService : IIdentityService
         }
     }
 
-    private const string email = "email";
-    private const string password = "password";
-
-    public async Task<AuthenticationResult> SignupAsync(string? email, string? password, string? confirmPassword)
+    public async Task<AuthenticationResult> SignupAsync(
+        string? email,
+        string? password,
+        string? confirmPassword,
+        string? givenName,
+        string? familyName)
     {
-        var user = _identityUserRepository.FindByEmailAsync(email);
-        if (user is not null)
+        var identityUser = await _identityUserRepository.FindByEmailAsync(email);
+        if (identityUser is not null)
         {
             return new AuthenticationResult
             {
                 ModelFieldErrors = new [] { new ModelEmailFieldError("User with specified email already exists.") },
             };
         }
-
-        if (!string.Equals(password, confirmPassword))
+        var result = Validate(email, password, confirmPassword, givenName, familyName);
+        if (!result.IsValid)
         {
             return new AuthenticationResult
             {
-                ModelFieldErrors = new [] { new ModelPasswordFieldError("Password and confirm password do not match.") }
+                ModelFieldErrors = result.Errors.Select(validationFailure => new ModelFieldError(validationFailure.PropertyName, validationFailure.ErrorMessage))
             };
         }
 
+        identityUser = await _identityUserProvider.GetIdentityUserAsync(email!, password!, familyName!, givenName!);
+        var storedIdentityUser = await _identityUserRepository.CreateAsync(identityUser);
+        return await GenerateAuthenticationResultForUserAsync(storedIdentityUser);
+    }
 
-
-        throw new NotImplementedException();
+    private FluentValidation.Results.ValidationResult Validate(
+        string? email,
+        string? password,
+        string? confirmPassword,
+        string? givenName,
+        string? familyName)
+    {
+        var signUpRequest = new UserSignupRequest
+        {
+            Email = email,
+            Password = password,
+            ConfirmPassword = confirmPassword,
+            GivenName = givenName,
+            FamilyName = familyName
+        };
+        var result = _userSignupRequestValidator.Validate(signUpRequest);
+        return result;
     }
 }
