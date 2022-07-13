@@ -1,1 +1,4 @@
-{ }
+{
+  "Frame, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "C:\\code\\personal\\itransition\\FrameRoot\\src\\backend\\Frame",
+  "Frame.UnitTests, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "C:\\code\\personal\\itransition\\FrameRoot\\tests\\Frame.UnitTests"
+}
