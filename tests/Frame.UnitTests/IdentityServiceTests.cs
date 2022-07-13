@@ -200,7 +200,7 @@ public class IdentityServiceTests : IClassFixture<Fixtures.TokenSpecificFixture>
     public async Task RefreshTokenAsync_ShouldReturnSuccededAuthenticationResult_WhenDataIsValid()
     {
         _mockRefreshTokenRepository
-            .Setup(repository => repository.SaveChangesAsync(It.IsAny<RefreshToken>()));
+            .Setup(repository => repository.ReplaceOneAsync(It.IsAny<RefreshToken>()));
         _mockRefreshTokenRepository
             .Setup(repository => repository.GetRefreshTokenByJwtIdAsync(It.IsNotNull<string>()))
             .ReturnsAsync(_fixture.ValidRefreshToken);

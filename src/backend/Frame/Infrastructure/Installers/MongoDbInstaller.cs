@@ -27,7 +27,15 @@ public class MongoDbInstaller : IInstaller
                 .SetIdGenerator(StringObjectIdGenerator.Instance)
                 .SetSerializer(new StringSerializer(BsonType.ObjectId));
         });
-        
+
+        BsonClassMap.RegisterClassMap<Frame.Domain.RefreshToken>(classMap =>
+        {
+            classMap.AutoMap();
+            classMap.MapIdMember(member => member.Token)
+                .SetIdGenerator(StringObjectIdGenerator.Instance)
+                .SetSerializer(new StringSerializer(BsonType.ObjectId));
+        });
+
         var mongoDbOptions = configuration.GetSection("MongoDbOptions").Get<MongoDbOptions>();
         services.AddSingleton(mongoDbOptions);
         services.AddSingleton<IMongoClient>(new MongoClient());

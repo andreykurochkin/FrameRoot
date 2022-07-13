@@ -27,7 +27,7 @@ public class DefaultIdentityUserProvider : IIdentityUserProvider
         var identityUser = new IdentityUser
         {
             Id = newUserId,
-            Claims = claims,
+            //Claims = claims,
             Email = email,
             Salt = salt,
             Password = await _hashProvider.GetHashAsync(password, Encoding.ASCII.GetBytes(salt)),

@@ -69,7 +69,7 @@ public class IdentityService : IIdentityService
         return await GenerateAuthenticationResultForUserAsync(user);
     }
 
-    public Task<AuthenticationResult> GenerateAuthenticationResultForUserAsync(Frame.Domain.IdentityUser identityUser)
+    public async Task<AuthenticationResult> GenerateAuthenticationResultForUserAsync(Frame.Domain.IdentityUser identityUser)
     {
         var accessToken = _securityTokenProvider.GetSecurityToken(identityUser);
         var refreshToken = _refreshTokenProvider.GetRefreshToken(accessToken, identityUser);
@@ -81,7 +81,8 @@ public class IdentityService : IIdentityService
             AccessToken = jwtToken,
             RefreshToken = refreshToken.Token,
         };
-        return Task.FromResult(result);
+        await _refreshTokenRepository.CreateAsync(refreshToken);
+        return result;
     }
 
     public async Task<AuthenticationResult> RefreshTokenAsync(string? token, string? password)
@@ -157,7 +158,7 @@ public class IdentityService : IIdentityService
 
         storedRefreshToken.Used = true;
         // todo uncomment
-        await _refreshTokenRepository.SaveChangesAsync(storedRefreshToken);
+        await _refreshTokenRepository.ReplaceOneAsync(storedRefreshToken);
 
         var user = await _identityUserRepository.FindByIdAsync(userIdFromClaimsPrincipal.Value);
         return await GenerateAuthenticationResultForUserAsync(user);
