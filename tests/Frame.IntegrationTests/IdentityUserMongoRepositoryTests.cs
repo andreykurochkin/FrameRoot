@@ -10,17 +10,6 @@ using Xunit;
 
 namespace Frame.IntegrationTests;
 
-//public class RefreshTokenMongoRepositoryTests : IClassFixture<MongoDbFixture>
-//{
-//    private readonly MongoDbFixture _fixture;
-//    private readonly RefreshTokenMongoRepository _sut;
-//    public RefreshTokenMongoRepositoryTests(MongoDbFixture fixture)
-//    {
-//        _fixture = fixture;
-//        _sut = new RefreshTokenMongoRepository();
-//    }
-//}
-
 public class IdentityUserMongoRepositoryTests : IClassFixture<MongoDbFixture>
 {
     private readonly MongoDbFixture _fixture;

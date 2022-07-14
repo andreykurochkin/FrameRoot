@@ -31,7 +31,7 @@ public class MongoDbInstaller : IInstaller
         BsonClassMap.RegisterClassMap<Frame.Domain.RefreshToken>(classMap =>
         {
             classMap.AutoMap();
-            classMap.MapIdMember(member => member.Token)
+            classMap.MapIdMember(member => member.Id)
                 .SetIdGenerator(StringObjectIdGenerator.Instance)
                 .SetSerializer(new StringSerializer(BsonType.ObjectId));
         });

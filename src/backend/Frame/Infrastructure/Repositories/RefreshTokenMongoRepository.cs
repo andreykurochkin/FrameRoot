@@ -37,7 +37,7 @@ public class RefreshTokenMongoRepository : IRefreshTokenRepository
     public async Task<ReplaceOneResult> ReplaceOneAsync(RefreshToken? refreshToken)
     {
         var filter = Builders<RefreshToken>.Filter.Eq(_ => _.Token, refreshToken!.Token); 
-        return await _refreshTokens
-          .ReplaceOneAsync(filter, refreshToken!);
+        var result = await _refreshTokens.ReplaceOneAsync(filter, refreshToken!);
+        return result;
     }
 }
