@@ -37,7 +37,7 @@ public class IdentityController : ControllerBase
         return Ok(new AuthSuccessResponse
         {
             Token = authResponse.AccessToken,
-            RefreshToken = authResp onse.RefreshToken,
+            RefreshToken = authResponse.RefreshToken,
         });
     }
     
