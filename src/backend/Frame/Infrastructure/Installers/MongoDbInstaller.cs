@@ -8,6 +8,8 @@ using Frame.Infrastructure.Options;
 using MongoDB.Driver;
 using Frame.Infrastructure.Repositories.Base;
 using Frame.Infrastructure.Repositories;
+using Frame.Infrastructure.Providers.Base;
+using Frame.Infrastructure.Providers;
 
 namespace Frame.Infrastructure.Installers;
 public class MongoDbInstaller : IInstaller
@@ -25,10 +27,20 @@ public class MongoDbInstaller : IInstaller
                 .SetIdGenerator(StringObjectIdGenerator.Instance)
                 .SetSerializer(new StringSerializer(BsonType.ObjectId));
         });
-        
+
+        BsonClassMap.RegisterClassMap<Frame.Domain.RefreshToken>(classMap =>
+        {
+            classMap.AutoMap();
+            classMap.MapIdMember(member => member.Id)
+                .SetIdGenerator(StringObjectIdGenerator.Instance)
+                .SetSerializer(new StringSerializer(BsonType.ObjectId));
+        });
+
         var mongoDbOptions = configuration.GetSection("MongoDbOptions").Get<MongoDbOptions>();
         services.AddSingleton(mongoDbOptions);
         services.AddSingleton<IMongoClient>(new MongoClient());
         services.AddScoped<IIdentityUserRepository, IdentityUserMongoRepository>();
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenMongoRepository>();
+        services.AddScoped<IGuidProvider, MongoGuidProvider>();
     }
 }

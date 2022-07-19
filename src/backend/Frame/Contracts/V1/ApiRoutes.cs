@@ -13,12 +13,10 @@ public static class ApiRoutes
 
     public static class Identity
     {
-        public const string Registration = Base + "/identity/registration";
+        public const string Signup = Base + "/identity/signup";
         
         public const string Login = Base + "/identity/login";
 
         public const string Refresh = Base + "/identity/refresh";
-
-        public const string Test = Base + "/identity/test";
     }
 }

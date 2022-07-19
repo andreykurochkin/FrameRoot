@@ -15,29 +15,23 @@ public class IdentityUserMongoRepository : IIdentityUserRepository
         IMongoClient mongoClient,
         MongoDbOptions mongoDbConfigurationOptions)
     {
+        
         _mongoClient = mongoClient;
         _mongoDbOptions = mongoDbConfigurationOptions;
         var database = _mongoClient.GetDatabase(_mongoDbOptions.DatabaseName);
         _identityUsers = database.GetCollection<IdentityUser>(MongoCollectionName);
     }
-    public Task<IdentityUser?> FindByEmailAsync(string email)
-    {
-        throw new NotImplementedException();
-    }
+    public async Task<IdentityUser?> FindByEmailAsync(string? email) => await _identityUsers
+        .Find(_ => _.Email == email)
+        .FirstOrDefaultAsync();
 
-    public Task<IdentityUser>? FindByIdAsync(string id)
-    {
-        throw new NotImplementedException();
-    }
+    public async Task<IdentityUser?> FindByIdAsync(string? id) => await _identityUsers
+        .Find(_ => _.Id == id)
+        .FirstOrDefaultAsync();
 
-    public async Task<List<IdentityUser>> GetAllAsync()
-    {
-        return await _identityUsers.Find(_ => true).ToListAsync();
-    }
+    public async Task<List<IdentityUser>> GetAllAsync() => await _identityUsers
+        .Find(_ => true)
+        .ToListAsync();
 
-    public async Task<IdentityUser> CreateAsync(IdentityUser identityUser)
-    {
-        await _identityUsers.InsertOneAsync(identityUser);
-        return identityUser;
-    }
+    public async Task CreateAsync(IdentityUser? identityUser) => await _identityUsers.InsertOneAsync(identityUser);
 }

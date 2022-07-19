@@ -1,4 +1,5 @@
 ﻿using Frame.Domain;
+using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,5 +10,6 @@ namespace Frame.Infrastructure.Repositories.Base;
 public interface IRefreshTokenRepository
 {
     Task<RefreshToken?> GetRefreshTokenByJwtIdAsync(string jwtId);
-    Task SaveChangesAsync(RefreshToken refreshToken);
+    Task CreateAsync(RefreshToken? refreshToken);
+    Task<ReplaceOneResult> ReplaceOneAsync(RefreshToken? refreshToken);
 }

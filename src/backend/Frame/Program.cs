@@ -14,6 +14,7 @@ app.UseSwaggerUI(options => options.SwaggerEndpoint(swaggerOptions.UIEndPoint, s
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 

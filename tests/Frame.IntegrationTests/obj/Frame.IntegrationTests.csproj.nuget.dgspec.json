@@ -4,14 +4,14 @@
     "C:\\code\\personal\\itransition\\FrameRoot\\tests\\Frame.IntegrationTests\\Frame.IntegrationTests.csproj": {}
   },
   "projects": {
-    "C:\\code\\personal\\itransition\\FrameRoot\\tests\\Frame.IntegrationTests\\Frame.IntegrationTests.csproj": {
+    "C:\\code\\personal\\itransition\\FrameRoot\\src\\backend\\Frame\\Frame.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\code\\personal\\itransition\\FrameRoot\\tests\\Frame.IntegrationTests\\Frame.IntegrationTests.csproj",
-        "projectName": "Frame.IntegrationTests",
-        "projectPath": "C:\\code\\personal\\itransition\\FrameRoot\\tests\\Frame.IntegrationTests\\Frame.IntegrationTests.csproj",
+        "projectUniqueName": "C:\\code\\personal\\itransition\\FrameRoot\\src\\backend\\Frame\\Frame.csproj",
+        "projectName": "Frame",
+        "projectPath": "C:\\code\\personal\\itransition\\FrameRoot\\src\\backend\\Frame\\Frame.csproj",
         "packagesPath": "C:\\Users\\a.kurochkin\\.nuget\\packages\\",
-        "outputPath": "C:\\code\\personal\\itransition\\FrameRoot\\tests\\Frame.IntegrationTests\\obj\\",
+        "outputPath": "C:\\code\\personal\\itransition\\FrameRoot\\src\\backend\\Frame\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\a.kurochkin\\AppData\\Roaming\\NuGet\\NuGet.Config",
@@ -40,6 +40,100 @@
         "net6.0": {
           "targetAlias": "net6.0",
           "dependencies": {
+            "FluentValidation": {
+              "target": "Package",
+              "version": "[11.1.0, )"
+            },
+            "Microsoft.AspNetCore.Authentication.JwtBearer": {
+              "target": "Package",
+              "version": "[6.0.6, )"
+            },
+            "Microsoft.IdentityModel.Tokens": {
+              "target": "Package",
+              "version": "[6.21.0, )"
+            },
+            "MongoDB.Driver": {
+              "target": "Package",
+              "version": "[2.16.1, )"
+            },
+            "Swashbuckle.AspNetCore": {
+              "target": "Package",
+              "version": "[6.3.1, )"
+            },
+            "Swashbuckle.AspNetCore.SwaggerUI": {
+              "target": "Package",
+              "version": "[6.3.1, )"
+            },
+            "System.IdentityModel.Tokens.Jwt": {
+              "target": "Package",
+              "version": "[6.21.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.AspNetCore.App": {
+              "privateAssets": "none"
+            },
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.202\\RuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\code\\personal\\itransition\\FrameRoot\\tests\\Frame.IntegrationTests\\Frame.IntegrationTests.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\code\\personal\\itransition\\FrameRoot\\tests\\Frame.IntegrationTests\\Frame.IntegrationTests.csproj",
+        "projectName": "Frame.IntegrationTests",
+        "projectPath": "C:\\code\\personal\\itransition\\FrameRoot\\tests\\Frame.IntegrationTests\\Frame.IntegrationTests.csproj",
+        "packagesPath": "C:\\Users\\a.kurochkin\\.nuget\\packages\\",
+        "outputPath": "C:\\code\\personal\\itransition\\FrameRoot\\tests\\Frame.IntegrationTests\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\a.kurochkin\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net6.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net6.0": {
+            "targetAlias": "net6.0",
+            "projectReferences": {
+              "C:\\code\\personal\\itransition\\FrameRoot\\src\\backend\\Frame\\Frame.csproj": {
+                "projectPath": "C:\\code\\personal\\itransition\\FrameRoot\\src\\backend\\Frame\\Frame.csproj"
+              },
+              "C:\\code\\personal\\itransition\\FrameRoot\\tests\\Frame.UnitTests\\Frame.UnitTests.csproj": {
+                "projectPath": "C:\\code\\personal\\itransition\\FrameRoot\\tests\\Frame.UnitTests\\Frame.UnitTests.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net6.0": {
+          "targetAlias": "net6.0",
+          "dependencies": {
             "FluentAssertions": {
               "target": "Package",
               "version": "[6.7.0, )"
@@ -51,6 +145,102 @@
             "Microsoft.NET.Test.Sdk": {
               "target": "Package",
               "version": "[16.11.0, )"
+            },
+            "MongoDB.Driver": {
+              "target": "Package",
+              "version": "[2.16.1, )"
+            },
+            "coverlet.collector": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[3.1.0, )"
+            },
+            "xunit": {
+              "target": "Package",
+              "version": "[2.4.1, )"
+            },
+            "xunit.runner.visualstudio": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[2.4.3, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.202\\RuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\code\\personal\\itransition\\FrameRoot\\tests\\Frame.UnitTests\\Frame.UnitTests.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\code\\personal\\itransition\\FrameRoot\\tests\\Frame.UnitTests\\Frame.UnitTests.csproj",
+        "projectName": "Frame.UnitTests",
+        "projectPath": "C:\\code\\personal\\itransition\\FrameRoot\\tests\\Frame.UnitTests\\Frame.UnitTests.csproj",
+        "packagesPath": "C:\\Users\\a.kurochkin\\.nuget\\packages\\",
+        "outputPath": "C:\\code\\personal\\itransition\\FrameRoot\\tests\\Frame.UnitTests\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\a.kurochkin\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net6.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net6.0": {
+            "targetAlias": "net6.0",
+            "projectReferences": {
+              "C:\\code\\personal\\itransition\\FrameRoot\\src\\backend\\Frame\\Frame.csproj": {
+                "projectPath": "C:\\code\\personal\\itransition\\FrameRoot\\src\\backend\\Frame\\Frame.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net6.0": {
+          "targetAlias": "net6.0",
+          "dependencies": {
+            "FluentAssertions": {
+              "target": "Package",
+              "version": "[6.7.0, )"
+            },
+            "Microsoft.AspNetCore.TestHost": {
+              "target": "Package",
+              "version": "[6.0.7, )"
+            },
+            "Microsoft.NET.Test.Sdk": {
+              "target": "Package",
+              "version": "[16.11.0, )"
+            },
+            "Moq": {
+              "target": "Package",
+              "version": "[4.18.1, )"
             },
             "coverlet.collector": {
               "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",

@@ -280,3 +280,4 @@ C:\code\personal\itransition\FrameRoot\tests\Frame.UnitTests\obj\Debug\net6.0\re
 C:\code\personal\itransition\FrameRoot\tests\Frame.UnitTests\obj\Debug\net6.0\Frame.UnitTests.pdb
 C:\code\personal\itransition\FrameRoot\tests\Frame.UnitTests\obj\Debug\net6.0\Frame.UnitTests.genruntimeconfig.cache
 C:\code\personal\itransition\FrameRoot\tests\Frame.UnitTests\obj\Debug\net6.0\ref\Frame.UnitTests.dll
+C:\code\personal\itransition\FrameRoot\tests\Frame.UnitTests\bin\Debug\net6.0\FluentValidation.dll

@@ -1,52 +1,19 @@
 ﻿using Frame.Contracts.V1;
 using Frame.Contracts.V1.Requests;
 using Frame.Contracts.V1.Responses;
-using Frame.Domain;
-using Frame.Infrastructure.Repositories.Base;
 using Frame.Infrastructure.Services.Base;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 
 namespace Frame.Controllers.V1;
 
 public class IdentityController : ControllerBase
 {
     private readonly IIdentityService _identityService;
-    private readonly IIdentityUserRepository _identityUserRepository;
 
-    public IdentityController(IIdentityService identityService,
-        IIdentityUserRepository identityUserRepository)
+    public IdentityController(IIdentityService identityService)
     {
         _identityService = identityService;
-        _identityUserRepository = identityUserRepository;
-    }
-
-    [HttpPost(ApiRoutes.Identity.Registration)]
-    public IActionResult Register()
-    {
-        return Ok("test1");
-    }
-
-    [HttpGet(ApiRoutes.Identity.Test)]
-    public async Task<IActionResult> Test()
-    {
-        var user = new IdentityUser
-        {
-            //Id = Guid.NewGuid().ToString(),
-            Claims = new[]
-            {
-                new Claim(JwtRegisteredClaimNames.Typ, Guid.NewGuid().ToString())
-            },
-            Email = "Test@test.com",
-            FamilyName = "Mercury",
-            GivenName = "Freddie",
-            PasswordSalt = "salt",
-            Password = "pass",
-        };
-        await _identityUserRepository.CreateAsync(user);
-        return Ok();
-        //return Ok(await _identityUserRepository.GetAllAsync());
     }
 
     [HttpPost(ApiRoutes.Identity.Login)]
@@ -59,8 +26,7 @@ public class IdentityController : ControllerBase
                 Errors = ModelState.Values.SelectMany(modelStateEntry => modelStateEntry.Errors.Select(modelError => modelError.ErrorMessage))
             });
         }
-        // todo check nullable string
-        var authResponse = await _identityService.LoginAsync(userLoginRequest.Email!, userLoginRequest.Password!);
+        var authResponse = await _identityService.LoginAsync(userLoginRequest.Email, userLoginRequest.Password);
         if (!authResponse.Succeded)
         {
             return BadRequest(new AuthFailedResponse
@@ -70,26 +36,58 @@ public class IdentityController : ControllerBase
         }
         return Ok(new AuthSuccessResponse
         {
-            Token = authResponse.Token,
-            RefreshToken = authResponse.RefreshToken,
+            Token = authResponse.AccessToken,
+            RefreshToken = authResp onse.RefreshToken,
         });
     }
-
+    
+    [Authorize]
     [HttpPost(ApiRoutes.Identity.Refresh)]
     public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest refreshTokenRequest)
     {
         var authResponse = await _identityService.RefreshTokenAsync(refreshTokenRequest.Token, refreshTokenRequest.RefreshToken);
         if (!authResponse.Succeded)
         {
-            return BadRequest(new AuthFailedResponse 
-            { 
+            return BadRequest(new AuthFailedResponse
+            {
                 Errors = authResponse.Errors
             });
         }
         return Ok(new AuthSuccessResponse
         {
-            Token = authResponse.Token,
+            Token = authResponse.AccessToken,
             RefreshToken = authResponse.RefreshToken
+        });
+    }
+
+    [HttpPost(ApiRoutes.Identity.Signup)]
+    public async Task<IActionResult> Signup([FromBody] UserSignupRequest userSignupRequest)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(new AuthFailedResponse
+            {
+                Errors = ModelState.Values.SelectMany(_ => _.Errors.Select(error => error.ErrorMessage))
+            });
+        }
+        var authResponse = await _identityService.SignupAsync(
+            userSignupRequest.Email,
+            userSignupRequest.Password,
+            userSignupRequest.ConfirmPassword,
+            userSignupRequest.GivenName,
+            userSignupRequest.FamilyName);
+        if (!authResponse.Succeded)
+        {
+            var output = new AuthFailedUISpecificResponse
+            {
+                ModelFieldErrors = authResponse.ModelFieldErrors!.ToList()
+            };
+            return BadRequest(output.ModelFieldErrors.Select(_ => $"FieldName: {_.FieldName} Error: {_.Error}").ToList());
+        }
+        return Ok(new AuthSuccessResponse
+        {
+            Token = authResponse.AccessToken,
+            RefreshToken = authResponse.RefreshToken,
         });
     }
 }
