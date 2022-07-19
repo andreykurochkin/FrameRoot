@@ -88,7 +88,7 @@
           "buildTransitive/net6.0/Microsoft.AspNetCore.Mvc.Testing.targets": {}
         }
       },
-      "Microsoft.AspNetCore.TestHost/6.0.6": {
+      "Microsoft.AspNetCore.TestHost/6.0.7": {
         "type": "package",
         "dependencies": {
           "System.IO.Pipelines": "6.0.3"
@@ -2630,6 +2630,7 @@
         "dependencies": {
           "FluentAssertions": "6.7.0",
           "Frame": "1.0.0",
+          "Microsoft.AspNetCore.TestHost": "6.0.7",
           "Microsoft.NET.Test.Sdk": "16.11.0",
           "Moq": "4.18.1",
           "xunit": "2.4.1"
@@ -2827,10 +2828,10 @@
         "tasks/netstandard2.0/Microsoft.AspNetCore.Mvc.Testing.Tasks.dll"
       ]
     },
-    "Microsoft.AspNetCore.TestHost/6.0.6": {
-      "sha512": "B96HzkKGKiRdQAjHTcwsJy0oPi30nGs2wkGKQPlqNRCL189fN2n6vHt6bKWW6BvCW2dBFo6puuUcgy7diu3uqg==",
+    "Microsoft.AspNetCore.TestHost/6.0.7": {
+      "sha512": "R6bQLifCI9YrHLNjyvvxxBFw0f10sejkNR1P6p5jgZkAu5qbQDVMaxZL0wIUtYY8imdyygQ3KjHHq3tJqxbl/A==",
       "type": "package",
-      "path": "microsoft.aspnetcore.testhost/6.0.6",
+      "path": "microsoft.aspnetcore.testhost/6.0.7",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -2838,7 +2839,7 @@
         "THIRD-PARTY-NOTICES.TXT",
         "lib/net6.0/Microsoft.AspNetCore.TestHost.dll",
         "lib/net6.0/Microsoft.AspNetCore.TestHost.xml",
-        "microsoft.aspnetcore.testhost.6.0.6.nupkg.sha512",
+        "microsoft.aspnetcore.testhost.6.0.7.nupkg.sha512",
         "microsoft.aspnetcore.testhost.nuspec"
       ]
     },
