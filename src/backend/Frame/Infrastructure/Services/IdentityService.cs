@@ -8,6 +8,7 @@ using Frame.Infrastructure.Providers.Base;
 using Frame.Infrastructure.Repositories.Base;
 using Frame.Infrastructure.Services.Base;
 using Frame.Infrastructure.Validators.Base;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -85,6 +86,7 @@ public class IdentityService : IIdentityService
         return result;
     }
 
+    [Authorize]
     public async Task<AuthenticationResult> RefreshTokenAsync(string? token, string? password)
     {
         if (token is null)

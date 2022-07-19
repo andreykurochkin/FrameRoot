@@ -44,6 +44,8 @@ public class MvcInstaller : IInstaller
             jwtBearerOptions.TokenValidationParameters = tokenValidationParameters;
         });
 
+        services.AddAuthorization();
+
         services.AddSingleton<IDateTimeProvider,DateTimeNowProvider>();
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddSingleton<ISaltProvider, DefaultSaltProvider>();
@@ -53,6 +55,7 @@ public class MvcInstaller : IInstaller
         services.AddScoped<IRefreshTokenProvider, DefaultRefreshTokenProvider>();
         services.AddScoped<IValidator<UserSignupRequest>, UserSignupRequestValidator>();
         services.AddScoped<IIdentityUserProvider, DefaultIdentityUserProvider>();
+
         services.AddControllers();
     }
 }

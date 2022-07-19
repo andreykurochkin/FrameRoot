@@ -1,12 +1,9 @@
 ﻿using Frame.Contracts.V1;
 using Frame.Contracts.V1.Requests;
 using Frame.Contracts.V1.Responses;
-using Frame.Domain;
-using Frame.Infrastructure.Repositories.Base;
 using Frame.Infrastructure.Services.Base;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 
 namespace Frame.Controllers.V1;
 
@@ -43,7 +40,8 @@ public class IdentityController : ControllerBase
             RefreshToken = authResponse.RefreshToken,
         });
     }
-
+    
+    [Authorize]
     [HttpPost(ApiRoutes.Identity.Refresh)]
     public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest refreshTokenRequest)
     {

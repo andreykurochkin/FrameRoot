@@ -32,7 +32,7 @@ public class DateTimeOperationsHelperTests
         var expectedResult = Convert.ToDateTime(expectedDate);
 
         var result = _sut.GetExpiryUnixUtcDateTimeUtc(jwtClaim);
-        
+
         result.Should().Be(expectedResult);
         _testOutputHelper.WriteLine(result.ToString());
     }
